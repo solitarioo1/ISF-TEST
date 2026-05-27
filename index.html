@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISF Peru — Registro de Participación</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f5f4;
+    --surface: #ffffff;
+    --border: #e2e2df;
+    --border-focus: #a8a8a3;
+    --text: #1a1a18;
+    --text-muted: #78786e;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --success: #16a34a;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+
+  nav { display: flex; gap: 4px; }
+
+  nav a {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  nav a:hover { background: var(--bg); color: var(--text); }
+  nav a.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+
+  main {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 24px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 100%;
+    max-width: 540px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title { font-size: 14px; font-weight: 500; }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  form { padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  select {
+    width: 100%;
+    height: 38px;
+    padding: 0 32px 0 10px;
+    font-family: var(--sans);
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2378786e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+
+  hr { border: none; border-top: 1px solid var(--border); }
+
+  .fixed-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .fixed-chip {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+
+  .card-footer {
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .hint { font-size: 12px; color: var(--text-muted); }
+
+  button[type="submit"] {
+    height: 36px;
+    padding: 0 18px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  button[type="submit"]:hover { opacity: 0.88; }
+  button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .status-bar {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 8px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+  .status-dot.loading { background: #f59e0b; animation: pulse 1s infinite; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  #toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    color: #fff;
+    background: var(--text);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.success { background: var(--success); }
+  #toast.error { background: #dc2626; }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">
+    <span class="logo-dot"></span>
+    ISF Peru · Timesheet
+  </a>
+  <nav>
+    <a href="index.html" class="active">Registro</a>
+    <a href="dashboard.html">Mis horas</a>
+  </nav>
+</header>
+
+<main>
+  <div class="card">
+
+    <div class="card-header">
+      <span class="card-title">Nueva participación</span>
+      <span class="badge" id="date-badge">—</span>
+    </div>
+
+    <form id="form-registro" novalidate>
+
+      <div class="field">
+        <label for="nombre">Miembro del equipo</label>
+        <select id="nombre" name="nombre" required>
+          <option value="">Selecciona tu nombre</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="dia">Día</label>
+          <select id="dia" name="dia" required>
+            <option value="">Día</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="days_worked">Tiempo dedicado</label>
+          <select id="days_worked" name="days_worked" required>
+            <option value="">Selecciona</option>
+            <option value="0.5">0.5 — Medio día</option>
+            <option value="1">1 — Día completo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="lugar">Lugar</label>
+        <select id="lugar" name="lugar" required>
+          <option value="">Selecciona</option>
+          <option value="Remote">Remote — Virtual</option>
+          <option value="Field">Field — Presencial</option>
+        </select>
+      </div>
+
+      <hr>
+
+      <div class="field">
+        <label for="actividad">Actividad</label>
+        <select id="actividad" name="actividad" required>
+          <option value="">Selecciona la actividad</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Proyecto</label>
+        <div class="fixed-row">
+          <span class="fixed-chip">ISF Peru</span>
+        </div>
+        <input type="hidden" name="proyecto" value="ISF Peru">
+      </div>
+
+    </form>
+
+    <div class="card-footer">
+      <span class="hint">Todos los campos son requeridos</span>
+      <button type="submit" form="form-registro" id="btn-submit">Guardar registro</button>
+    </div>
+
+    <div class="status-bar">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">Conectado · Google Drive listo</span>
+    </div>
+
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+  // ── CONFIG — reemplazar con URLs reales de n8n ──
+  const N8N_SUBMIT   = 'https://TU_N8N.com/webhook/timesheet-registro';
+  const N8N_REFDATA  = 'https://TU_N8N.com/webhook/timesheet-refdata';
+
+  // ── FECHA ──
+  const now = new Date();
+  const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  document.getElementById('date-badge').textContent = `${MESES[now.getMonth()]} ${now.getFullYear()}`;
+
+  // Días del mes
+  const totalDias = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const selDia = document.getElementById('dia');
+  for (let d = 1; d <= totalDias; d++) {
+    const o = new Option(d < 10 ? `0${d}` : `${d}`, d);
+    if (d === now.getDate()) o.selected = true;
+    selDia.add(o);
+  }
+
+  // ── CARGAR REFERENCE DATA ──
+  async function cargarDatos() {
+    setStatus('loading', 'Cargando datos...');
+    try {
+      // Fetch real a n8n (descomentar cuando el webhook esté listo):
+      // const res = await fetch(N8N_REFDATA);
+      // const { miembros, actividades } = await res.json();
+
+      // MOCK con datos reales del Excel
+      const miembros = [
+        '1 Romulo Campos Quispe','2 Rodrigo Gonzales Muñoz',
+        '3 Lourdes del Carpio Gómez de la Torre','4 Sophia Salcedo Candela',
+        '5 Carmen Cáceres Holguin','6 Nasson Perez Rojas',
+        '7 Maria Angela Cusi','8 José Pedro Couto de Sousa',
+        '9 Hilary Alliccaco Flores','10 Jarumy Dávila Vienrich',
+        '11 Juan Carlos Hidalgo Bardales',
+      ];
+
+      const actividades = [
+        'ISF Peru - 1.1: Identify the Needs of the End Beneficiary',
+        'ISF Peru - 1.1: Needs specifications & base data collection',
+        'ISF Peru - 1.11: Visit farmer collectives / distribution model validation',
+        'ISF Peru - 1.2: Engage private stakeholders (Reinsurers, aggregators, cooperatives traders)',
+        'ISF Peru - 1.3: Engage public stakeholders (Ministry of agriculture, National Coffee board)',
+        'ISF Peru - 1.4: Define the distribution process (Underwriting and payouts)',
+        'ISF Peru - 1.5: Define and develop premium payment collection mechanism',
+        'ISF Peru - 1.6: Define the different distribution channels of the communication campaigns',
+        'ISF Peru - 1.7: Run trainning workshops to stakeholders',
+        'ISF Peru - 1.8: Catalog aggregation/distribution options',
+        'ISF Peru - 1.9: Define distribution partners roles & responsibilities',
+        'ISF Peru - 2.1: Geo-locate farmers',
+        'ISF Peru - 2.1: Travel costs',
+        'ISF Peru - 2.2: Establish phenological calendar and growth phase vulnerabilities',
+        'ISF Peru - 2.3: Index prototyping & custom-centric risk solution design',
+        'ISF Peru - 2.4: Define design parameters and principles based on farmer needs',
+        'ISF Peru - 2.5: New Perils feasibility - Analize temperature as a peril',
+        'ISF Peru - 2.6: Iteratively design solution',
+        'ISF Peru - 2.7: Iteratively price solution',
+        'ISF Peru - 2.8: Adjust the model to ensure it is acceptable in terms of costs',
+        'ISF Peru - 2.9: Third Party basis risk assessment',
+        'ISF Peru - 3.1: Design trainning workshop for Norandino, Agrobanco and other aggregators',
+        'ISF Peru - 3.2: Run trainning workshop - Café Seguro for farmers',
+        'ISF Peru - 3.3: Run trainning workshop - Café Seguro for banks and MFIs',
+        'ISF Peru - 3.4: Share pipeline and goals/objectives per aggregator/region',
+        'ISF Peru - 3.5: Participate in events related to insurance, finance and coffee',
+        'ISF Peru - 3.6: Marketing material: Radio, video, brochures, whatsapp campaigns',
+        'ISF Peru - 3.8: Assessment of social vulnerability dimension',
+        'ISF Peru - 4.1: Develop and implement articulation Blue Marble and La Positiva',
+        'ISF Peru - 4.2: Adapt data collection app to La Positiva and Norandino requirements',
+        'ISF Peru - 4.3: Adapt CRM for MIDAGRI and other clients',
+        'ISF Peru - 4.4: Trainning and technological support for stakeholders',
+        'ISF Peru - 5.1: Draft technical documentation',
+        'ISF Peru - 5.2: Generate grid or farmer-level termsheets',
+        'ISF Peru - 5.3: Secure government subsidies',
+        'ISF Peru - 5.4: Issue policies',
+        'ISF Peru - 5.5: Ensure reinsurance contracts',
+        'ISF Peru - 5.6: Legal and compliance advisory',
+        'ISF Peru - 6.1: Basis risk mitigation (quantitative analysis)',
+        'ISF Peru - 6.2: Payouts distribution and Communication strategy for farmers',
+        'ISF Peru - 6.3: Guarantee Timely distribution of payouts',
+        'ISF Peru - 6.4: Basis risk mitigation (qualitative analysis) - Focus groups',
+        'ISF Peru - 6.5: Premium reconciliation in systems',
+        'ISF Peru - 7.1: Quarterly, annual and final reporting to ISF / FS',
+        'ISF Peru - 7.2: Financial auditing and monitoring of the project',
+        'ISF Peru - 8.1: Premium ISF Support',
+        'ISF Peru - 8.2: Premium Subsidy requested',
+        'ISF Peru - 8.3: Farmer premium Data base Conciliation',
+        'ISF Peru - 9.1: Design and Deliver Climate Resilience and Knowledge Transfer Strategy',
+        'ISF Peru - 9.2: Implement Café Seguro through Multi-Stakeholder Field Deployment',
+      ];
+
+      miembros.forEach(m => document.getElementById('nombre').add(new Option(m, m)));
+      actividades.forEach(a => document.getElementById('actividad').add(new Option(a, a)));
+      setStatus('ok', 'Conectado · Google Drive listo');
+
+    } catch(e) {
+      setStatus('loading', 'Error al cargar datos');
+    }
+  }
+
+  // ── SUBMIT ──
+  document.getElementById('form-registro').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-submit');
+    const ids = ['nombre','dia','days_worked','lugar','actividad'];
+    const data = {};
+    let ok = true;
+
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      data[id] = el.value;
+      el.style.borderColor = el.value ? '' : '#ef4444';
+      if (!el.value) ok = false;
+    });
+
+    if (!ok) { toast('Completa todos los campos', 'error'); return; }
+
+    data.proyecto = 'ISF Peru';
+    data.mes = MESES[now.getMonth()];
+    data.anio = now.getFullYear();
+
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+    setStatus('loading', 'Enviando a n8n...');
+
+    try {
+      // Fetch real (descomentar cuando n8n esté listo):
+      // const r = await fetch(N8N_SUBMIT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+      // if (!r.ok) throw new Error();
+
+      await new Promise(r => setTimeout(r, 1000)); // mock
+      toast('Registro guardado correctamente', 'success');
+      e.target.reset();
+      selDia.value = now.getDate();
+      setStatus('ok', 'Conectado · Google Drive listo');
+    } catch {
+      toast('Error al guardar. Intenta de nuevo.', 'error');
+      setStatus('ok', 'Conectado · Google Drive listo');
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Guardar registro';
+  });
+
+  document.querySelectorAll('select').forEach(s =>
+    s.addEventListener('change', () => s.style.borderColor = '')
+  );
+
+  function toast(msg, type='') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = type ? `show ${type}` : 'show';
+    setTimeout(() => t.className = '', 3200);
+  }
+
+  function setStatus(state, text) {
+    document.getElementById('status-dot').className = state === 'loading' ? 'status-dot loading' : 'status-dot';
+    document.getElementById('status-text').textContent = text;
+  }
+
+  cargarDatos();
+</script>
+</body>
+</html>

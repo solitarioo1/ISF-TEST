@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ISF Peru — Mis horas</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#">
+    <span class="logo-dot"></span>
+    ISF Peru · Timesheet
+  </a>
+  <nav>
+    <a href="index.html">Registro</a>
+    <a href="dashboard.html" class="active">Mis horas</a>
+  </nav>
+</header>
+
+<main style="flex-direction:column; align-items:center; gap:20px;">
+
+  <div class="dashboard-grid">
+    <div class="stat-card">
+      <div class="stat-label">Días trabajados este mes</div>
+      <div class="stat-value" id="total-dias">—</div>
+    </div>
+  </div>
+
+  <div class="card" style="max-width:900px;">
+    <div class="card-header">
+      <span class="card-title">Registros del mes</span>
+      <span class="badge" id="date-badge">—</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Día</th>
+            <th>Tiempo</th>
+            <th>Lugar</th>
+            <th>Actividad</th>
+          </tr>
+        </thead>
+        <tbody id="registros-body">
+          <tr>
+            <td colspan="4" style="text-align:center;color:var(--text-muted)">Cargando...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+<script src="js/config.js"></script>
+<script src="js/dashboard.js"></script>
+</body>
+</html>

@@ -1,4 +1,26 @@
+# VSCode / AI
+.github/instructions/codacy.instructions.md
 
+# Variables de entorno (nunca subir)
+.env
+.env.local
 
-#Ignore vscode AI rules
-.github\instructions\codacy.instructions.md
+# Archivos Excel locales (datos personales)
+*.xlsx
+*.xls
+data/
+excels/
+
+# Flujos n8n (contienen IDs y credenciales internas)
+n8n/
+
+# Guías internas
+guia.md
+guia.v2.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (si se agrega en el futuro)
+node_modules/

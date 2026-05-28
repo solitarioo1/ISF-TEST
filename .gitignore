@@ -5,6 +5,9 @@
 .env
 .env.local
 
+# Config local con URLs reales (Docker usa config.template.js)
+frontend/js/config.js
+
 # Archivos Excel locales (datos personales)
 *.xlsx
 *.xls

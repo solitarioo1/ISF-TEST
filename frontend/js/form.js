@@ -125,11 +125,11 @@ btnConfirm.addEventListener('click', async () => {
   setStatus('loading', 'Enviando a n8n...');
 
   try {
-    const r = await fetch(CONFIG.N8N_SUBMIT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(pendingPayload),
-    });
+    const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pendingPayload) };
+    const [r] = await Promise.all([
+      fetch(CONFIG.N8N_SUBMIT, opts),
+      fetch(CONFIG.N8N_BACKUP, opts).catch(() => {}),
+    ]);
     if (!r.ok) throw new Error('n8n respondió con error');
     closeModal();
     toast('Registro guardado correctamente', 'success');

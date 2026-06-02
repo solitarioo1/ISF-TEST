@@ -1,22 +1,76 @@
 // ── Inicialización ──────────────────────────────────────────────────────────
 
 const now = new Date();
-
-document.getElementById('date-badge').textContent =
-  `${CONFIG.MESES[now.getMonth()]} ${now.getFullYear()}`;
-
-// Poblar dropdown de días con formato "28 de Mayo"
 const MESES_LARGO = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                      'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const totalDias = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-const mesLargo  = MESES_LARGO[now.getMonth()];
-const selDia    = document.getElementById('dia');
+const selDia = document.getElementById('dia');
 
-for (let d = 1; d <= totalDias; d++) {
-  const label = `${d} de ${mesLargo}`;
-  const o = new Option(label, d);
-  if (d === now.getDate()) o.selected = true;
-  selDia.add(o);
+// Trimestre actual (0-based): Q1=0,1,2 Q2=3,4,5 Q3=6,7,8 Q4=9,10,11
+const mesActual = now.getMonth();
+const trimestreInicio = Math.floor(mesActual / 3) * 3;
+const mesesQ = [trimestreInicio, trimestreInicio + 1, trimestreInicio + 2];
+
+let mesSeleccionado = mesActual;
+
+function poblarDias(mes) {
+  selDia.innerHTML = '<option value="">Selecciona el día</option>';
+  const total = new Date(now.getFullYear(), mes + 1, 0).getDate();
+  const esHoy = mes === mesActual;
+  for (let d = 1; d <= total; d++) {
+    const o = new Option(`${d} de ${MESES_LARGO[mes]}`, d);
+    if (esHoy && d === now.getDate()) o.selected = true;
+    selDia.add(o);
+  }
+}
+
+function renderChips() {
+  const container = document.getElementById('mes-chips');
+  container.innerHTML = '';
+  mesesQ.forEach(m => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'mes-chip' + (m === mesSeleccionado ? ' active' : '');
+    chip.textContent = `${CONFIG.MESES[m]} ${now.getFullYear()}`;
+    chip.addEventListener('click', () => {
+      mesSeleccionado = m;
+      renderChips();
+      poblarDias(m);
+      checkDias();
+    });
+    container.appendChild(chip);
+  });
+}
+
+renderChips();
+poblarDias(mesActual);
+
+// ── Check días registrados ──────────────────────────────────────────────────
+
+let diasRegistrados = [];
+
+async function checkDias() {
+  const nombre = document.getElementById('nombre').value;
+  if (!nombre) { diasRegistrados = []; marcarDias(); return; }
+  try {
+    const url = `${CONFIG.N8N_CHECK}?nombre=${encodeURIComponent(nombre)}&mes=${CONFIG.MESES[mesSeleccionado]}&anio=${now.getFullYear()}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    diasRegistrados = data.diasRegistrados || [];
+  } catch { diasRegistrados = []; }
+  marcarDias();
+}
+
+function marcarDias() {
+  Array.from(selDia.options).forEach(o => {
+    const d = parseInt(o.value);
+    if (diasRegistrados.includes(d)) {
+      o.disabled = true;
+      o.text = o.text.includes('✓') ? o.text : `✓ ${o.text} — ya registrado`;
+    } else {
+      o.disabled = false;
+      o.text = o.text.replace(' — ya registrado', '').replace('✓ ', '');
+    }
+  });
 }
 
 // ── Carga de datos desde n8n ────────────────────────────────────────────────
@@ -34,6 +88,7 @@ async function cargarDatos() {
     miembros.forEach(m => document.getElementById('nombre').add(new Option(m, m)));
     categoriasData = categorias;
     setStatus('ok', 'Conectado · Google Drive listo');
+    document.getElementById('nombre').addEventListener('change', checkDias);
   } catch (e) {
     console.warn('n8n no disponible:', e.message);
     setStatus('ok', 'Sin conexión a Drive');
@@ -89,11 +144,29 @@ function renderActividades(items) {
   });
 }
 
+const CAT_IN = {
+  '1': 'Distribution Model', '2': 'Climatic Model', '3': 'Capacity Building',
+  '4': 'IT Requirements',    '5': 'Program Roll Out','6': 'Climatic Reporting',
+  '7': 'ISF Reporting',      '8': 'Premium Collection','9': 'Technical Partnership'
+};
+
+let actividadMeta = {};
+
 function selectActividad(item) {
   hiddenActividad.value = item.value;
   triggerLabel.textContent = `${categoriaActual.nombre} · ${item.label}`;
   trigger.classList.add('filled');
   trigger.style.borderColor = '';
+
+  const codigo = item.label.match(/^(\d+-\d+)/)?.[1] || '';
+  const catNum = codigo.split('-')[0];
+  actividadMeta = {
+    actividad_IN:  item.value,
+    actividad_ES:  item.label,
+    categoria_ES:  categoriaActual.nombre,
+    categoria_IN:  CAT_IN[catNum] || '',
+    codigo,
+  };
   closePicker();
 }
 
@@ -163,8 +236,9 @@ btnConfirm.addEventListener('click', async () => {
     hiddenActividad.value = '';
     triggerLabel.textContent = 'Selecciona la actividad';
     trigger.classList.remove('filled');
-    selDia.value = now.getDate();
+    actividadMeta = {};
     setStatus('ok', 'Conectado · Google Drive listo');
+    await checkDias();
   } catch {
     toast('Error al guardar. Intenta de nuevo.', 'error');
     setStatus('ok', 'Conectado · Google Drive listo');
@@ -190,7 +264,7 @@ document.getElementById('form-registro').addEventListener('submit', e => {
     if (!el.value) valido = false;
   });
 
-  // Actividad (hidden input + trigger visual)
+  // Actividad
   payload.actividad = hiddenActividad.value;
   if (!payload.actividad) {
     trigger.style.borderColor = '#ef4444';
@@ -199,9 +273,15 @@ document.getElementById('form-registro').addEventListener('submit', e => {
 
   if (!valido) { toast('Completa todos los campos', 'error'); return; }
 
-  payload.proyecto = CONFIG.PROYECTO;
-  payload.mes      = CONFIG.MESES[now.getMonth()];
-  payload.anio     = now.getFullYear();
+  payload.proyecto     = CONFIG.PROYECTO;
+  payload.mes          = CONFIG.MESES[mesSeleccionado];
+  payload.anio         = now.getFullYear();
+  payload.trimestre    = `Q${Math.floor(mesSeleccionado / 3) + 1}`;
+  payload.actividad_IN = actividadMeta.actividad_IN || payload.actividad;
+  payload.actividad_ES = actividadMeta.actividad_ES || '';
+  payload.categoria_IN = actividadMeta.categoria_IN || '';
+  payload.categoria_ES = actividadMeta.categoria_ES || '';
+  payload.codigo       = actividadMeta.codigo || '';
 
   showModal(payload);
 });

@@ -20,43 +20,183 @@
   </nav>
 </header>
 
-<main style="flex-direction:column; align-items:center; gap:20px;">
+<main class="dash-main">
 
-  <div class="dashboard-grid">
-    <div class="stat-card">
-      <div class="stat-label">Días trabajados este mes</div>
-      <div class="stat-value" id="total-dias">—</div>
+  <div class="dash-top">
+    <div class="field" style="max-width:320px;">
+      <label for="dash-nombre">Miembro del equipo</label>
+      <select id="dash-nombre">
+        <option value="">Selecciona tu nombre</option>
+      </select>
+    </div>
+    <div class="dash-tabs">
+      <button class="dash-tab active" data-tab="mensual">Avance mensual</button>
+      <button class="dash-tab" data-tab="personal">Mi progreso</button>
+      <!-- Equipo: oculto temporalmente, se presentará al final -->
+      <button class="dash-tab" data-tab="equipo" style="display:none">Equipo</button>
     </div>
   </div>
 
-  <div class="card" style="max-width:900px;">
-    <div class="card-header">
-      <span class="card-title">Registros del mes</span>
-      <span class="badge" id="date-badge">—</span>
+  <!-- TAB: Mi progreso -->
+  <div id="tab-personal" class="dash-section">
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label">Días Asignados</div>
+        <div class="stat-value" id="stat-plan">—</div>
+      </div>
+      <div class="stat-card teal-card">
+        <div class="stat-label">Días Trabajados</div>
+        <div class="stat-value teal" id="stat-exec">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Días Pendientes</div>
+        <div class="stat-value" id="stat-rest">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">% Completado</div>
+        <div class="stat-value" id="stat-pct">—</div>
+      </div>
     </div>
-    <div style="overflow-x:auto;">
-      <table>
-        <thead>
-          <tr>
-            <th>Día</th>
-            <th>Tiempo</th>
-            <th>Lugar</th>
-            <th>Actividad</th>
-          </tr>
-        </thead>
-        <tbody id="registros-body">
-          <tr>
-            <td colspan="4" style="text-align:center;color:var(--text-muted)">Cargando...</td>
-          </tr>
-        </tbody>
-      </table>
+
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
     </div>
+
+    <div class="card" style="margin-top:0">
+      <div class="card-header">
+        <span class="card-title">Mis actividades asignadas</span>
+        <span class="badge" id="dash-badge">—</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Actividad</th>
+              <th style="color:var(--accent)">Días Asignados</th>
+              <th style="color:#00C9B1">Días Trabajados</th>
+              <th>Días Pendientes</th>
+              <th>% Completado</th>
+            </tr>
+          </thead>
+          <tbody id="horas-body">
+            <tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Selecciona un miembro</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Por mes -->
+  <div id="tab-mensual" class="dash-section" hidden>
+
+    <div class="field" style="max-width:200px">
+      <label for="sel-mes">Mes</label>
+      <select id="sel-mes"></select>
+    </div>
+
+    <div class="stat-row" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card">
+        <div class="stat-label">Días registrados</div>
+        <div class="stat-value accent" id="mensual-dias">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Actividades distintas</div>
+        <div class="stat-value" id="mensual-acts">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Mes seleccionado</div>
+        <div class="stat-value" id="mensual-label" style="font-size:16px">—</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:0">
+      <div class="card-header">
+        <span class="card-title">Registros del mes</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr><th>Día</th><th>Código</th><th>Actividad</th><th>Lugar</th><th>Días</th></tr>
+          </thead>
+          <tbody id="mensual-body">
+            <tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Selecciona un miembro</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Equipo -->
+  <div id="tab-equipo" class="dash-section" hidden>
+
+    <!-- Resumen general del proyecto -->
+    <div class="card" style="margin-top:0">
+      <div class="card-header">
+        <span class="card-title">Avance general del proyecto</span>
+        <span class="badge teal" id="equipo-badge">—</span>
+      </div>
+      <div class="equipo-resumen">
+        <div class="equipo-stats">
+          <div class="eq-stat">
+            <span class="eq-stat-num" id="eq-plan">—</span>
+            <span class="eq-stat-lbl">Días planificados</span>
+          </div>
+          <div class="eq-stat">
+            <span class="eq-stat-num" style="color:var(--teal)" id="eq-exec">—</span>
+            <span class="eq-stat-lbl">Días ejecutados</span>
+          </div>
+          <div class="eq-stat">
+            <span class="eq-stat-num" id="eq-rest">—</span>
+            <span class="eq-stat-lbl">Días faltantes</span>
+          </div>
+          <div class="eq-stat">
+            <span class="eq-stat-num" style="color:var(--accent)" id="eq-pct">—</span>
+            <span class="eq-stat-lbl">Avance</span>
+          </div>
+        </div>
+        <div class="equipo-donut">
+          <canvas id="chart-equipo-global"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-tabs" id="equipo-subtabs" style="justify-content:flex-start">
+      <button class="dash-tab active" data-subtab="eq-mes">Por mes</button>
+      <button class="dash-tab" data-subtab="eq-proyecto">Por sección</button>
+    </div>
+
+    <!-- Equipo por mes: línea acumulada -->
+    <div id="eq-mes">
+      <div class="card" style="margin-top:0">
+        <div class="card-header">
+          <span class="card-title">Avance acumulado en el tiempo</span>
+        </div>
+        <div style="position:relative;height:380px;padding:20px 0">
+          <canvas id="chart-equipo-mes"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Equipo por sección: dona distribución -->
+    <div id="eq-proyecto" hidden>
+      <div class="card" style="margin-top:0">
+        <div class="card-header">
+          <span class="card-title">Distribución de tiempo por sección</span>
+        </div>
+        <div style="position:relative;height:400px;padding:20px 0;display:flex;justify-content:center">
+          <canvas id="chart-equipo-seccion" style="max-width:480px"></canvas>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </main>
 
 <div id="toast"></div>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="js/config.js"></script>
 <script src="js/dashboard.js"></script>
 </body>

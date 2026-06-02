@@ -27,3 +27,6 @@ Thumbs.db
 
 # Node (si se agrega en el futuro)
 node_modules/
+
+#archivo xlsx
+Tabla de Horas.xlsx

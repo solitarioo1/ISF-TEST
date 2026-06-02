@@ -26,7 +26,28 @@ let chartEquipoSeccion = null;
 
 async function init() {
   poblarMeses();
+  setConexion('loading', 'Cargando datos…');
   await Promise.all([cargarMiembros(), cargarBackupCompleto(), cargarEquipoPlan()]);
+  if (miembros.length > 0) {
+    setConexion('ok', 'Conectado · Google Drive listo');
+  } else {
+    setConexion('error', 'Sin conexión · revisa los webhooks');
+  }
+}
+
+// Actualiza el indicador de conexión del footer
+function setConexion(estado, texto) {
+  const el = document.getElementById('conn-status');
+  const txt = document.getElementById('conn-text');
+  if (!el || !txt) return;
+  el.className = `conn-status ${estado}`;
+  txt.textContent = texto;
+  // Al conectar, ocultar suavemente después de unos segundos
+  if (estado === 'ok') {
+    setTimeout(() => { el.style.opacity = '0'; }, 4000);
+  } else {
+    el.style.opacity = '1';
+  }
 }
 
 // ── Plan total del equipo (desde webhook dashboard) ────────────────────────────
@@ -196,8 +217,8 @@ function renderPersonal(data) {
           : `<strong style="color:var(--accent)">${a.codigo}</strong>`
         }
       </td>
-      <td data-label="Días Asignados" style="font-weight:500;color:var(--accent)">${a.planificado}</td>
-      <td data-label="Días Trabajados" style="font-weight:500;color:var(--teal)">${a.ejecutado}</td>
+      <td data-label="Días Asignados" style="font-weight:600;color:#e0552f">${a.planificado}</td>
+      <td data-label="Días Trabajados" style="font-weight:600;color:#008c7a">${a.ejecutado}</td>
       <td data-label="Días Pendientes">${rest}</td>
       <td data-label="% Completado">${badge}</td>
     </tr>`;
@@ -232,7 +253,7 @@ function renderMensual(nombre) {
     .map(r => `<tr>
       <td data-label="Día">${r[3]}</td>
       <td data-label="Código" class="celda-titulo"><strong>${r[11] || r[7].split(' ')[0]}</strong></td>
-      <td data-label="Actividad" style="font-size:12px;color:var(--text-muted)">${r[8] || ''}</td>
+      <td data-label="Actividad" style="font-size:14px;color:#3f3f3a">${r[8] || ''}</td>
       <td data-label="Lugar">${r[6] === 'Remote' ? 'Virtual' : 'Presencial'}</td>
       <td data-label="Días">${r[13]}</td>
     </tr>`).join('');

@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ISF Peru — Mis horas</title>
+  <link rel="icon" type="image/avif" href="img/logo-isf.avif">
+  <link rel="icon" type="image/webp" href="img/logo-isf.webp">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -11,7 +13,10 @@
 
 <header>
   <a class="logo" href="#">
-    <span class="logo-dot"></span>
+    <picture>
+      <source srcset="#" type="image/avif">
+      <img src="#" class="logo-img" alt="ISF Peru">
+    </picture>
     ISF Peru · Timesheet
   </a>
   <nav>
@@ -96,7 +101,7 @@
       <select id="sel-mes"></select>
     </div>
 
-    <div class="stat-row" style="grid-template-columns:repeat(3,1fr)">
+    <div class="stat-row stat-row-3">
       <div class="stat-card">
         <div class="stat-label">Días registrados</div>
         <div class="stat-value accent" id="mensual-dias">—</div>
@@ -194,6 +199,11 @@
   </div>
 
 </main>
+
+<div id="conn-status" class="conn-status loading">
+  <span class="conn-dot"></span>
+  <span id="conn-text">Cargando datos…</span>
+</div>
 
 <div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

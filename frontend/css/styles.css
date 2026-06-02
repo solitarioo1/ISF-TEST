@@ -48,6 +48,7 @@ header {
 }
 
 .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+.logo-img { height: 28px; width: auto; display: block; }
 
 nav { display: flex; gap: 4px; }
 
@@ -316,6 +317,8 @@ button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
   gap: 12px;
 }
 
+.stat-row-3 { grid-template-columns: repeat(3, 1fr); }
+
 .stat-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -377,19 +380,27 @@ button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
 .mini-label.completado { color: var(--teal); }
 .mini-label.excedido   { color: #dc2626; }
 
-tr.fila-excedida { background: #fff5f5; }
-tr.fila-excedida:hover { background: #fee2e2; }
+/* Filas alternas (zebra) con dos tonos de cian para separar cada actividad */
+#horas-body tr:nth-child(odd),
+#mensual-body tr:nth-child(odd) { background: #EAFBF9; }
+#horas-body tr:nth-child(even),
+#mensual-body tr:nth-child(even) { background: #DCEBFB; }
 
-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+/* La fila excedida (rojo) siempre tiene prioridad sobre el zebra */
+#horas-body tr.fila-excedida { background: #fff5f5; }
+#horas-body tr.fila-excedida:hover { background: #fee2e2; }
+
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
 th { text-align: left; font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 14px; border-bottom: 1px solid var(--border); }
-td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
 tr:last-child td { border-bottom: none; }
 
 @media (max-width: 600px) {
   header { padding: 0 16px; }
   .logo { font-size: 12px; }
   .dash-main { padding: 20px 14px; }
-  .stat-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat-row,
+  .stat-row-3 { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .stat-card { padding: 14px 16px; }
   .stat-value { font-size: 22px; }
   .dash-top { flex-direction: column; align-items: stretch; }
@@ -700,4 +711,48 @@ tr:last-child td { border-bottom: none; }
   .equipo-resumen { flex-direction: column; gap: 24px; }
   .equipo-donut { width: 150px; height: 150px; }
   .eq-stat-num { font-size: 26px; }
+}
+
+/* ── Indicador de conexión (footer) ── */
+.conn-status {
+  position: fixed;
+  bottom: 14px;
+  right: 14px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  transition: opacity 0.3s;
+}
+
+.conn-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.conn-status.loading { color: var(--text-muted); }
+.conn-status.loading .conn-dot { background: #f59e0b; animation: conn-pulse 1s ease-in-out infinite; }
+
+.conn-status.ok { color: #00a898; }
+.conn-status.ok .conn-dot { background: var(--teal); }
+
+.conn-status.error { color: #dc2626; }
+.conn-status.error .conn-dot { background: #dc2626; }
+
+@keyframes conn-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@media (max-width: 600px) {
+  .conn-status { bottom: 10px; right: 10px; left: 10px; justify-content: center; }
 }

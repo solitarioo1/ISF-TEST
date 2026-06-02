@@ -386,10 +386,69 @@ td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
 tr:last-child td { border-bottom: none; }
 
 @media (max-width: 600px) {
-  .stat-row { grid-template-columns: repeat(2, 1fr); }
+  header { padding: 0 16px; }
+  .logo { font-size: 12px; }
+  .dash-main { padding: 20px 14px; }
+  .stat-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat-card { padding: 14px 16px; }
+  .stat-value { font-size: 22px; }
   .dash-top { flex-direction: column; align-items: stretch; }
   .dash-tabs { justify-content: stretch; }
-  .dash-tab { flex: 1; text-align: center; }
+  .dash-tab { flex: 1; text-align: center; padding: 10px 12px; }
+
+  /* ── Tablas → tarjetas apiladas ── */
+  .card > div[style*="overflow-x"] { overflow-x: visible; }
+
+  table thead { display: none; }
+
+  table tbody tr {
+    display: block;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 14px;
+    margin-bottom: 12px;
+  }
+  table tbody tr:last-child { margin-bottom: 0; }
+
+  table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 14px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+    text-align: right;
+  }
+  table tbody tr td:last-child { border-bottom: none; }
+
+  table tbody td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  /* Celda título: ocupa todo el ancho, sin etiqueta */
+  table tbody td.celda-titulo {
+    display: block;
+    text-align: left;
+    padding: 10px 0 8px;
+    border-bottom: 2px solid var(--border);
+    font-size: 14px;
+  }
+  table tbody td.celda-titulo::before { content: none; }
+
+  /* Barra de progreso alineada a la derecha dentro de la tarjeta */
+  table tbody td .mini-progress { min-width: 130px; align-items: flex-end; }
+
+  /* Filas vacías / mensajes con colspan */
+  table tbody td[colspan] { display: block; text-align: center; }
+  table tbody td[colspan]::before { content: none; }
 }
 
 /* ── Actividad trigger (looks like a select) ── */

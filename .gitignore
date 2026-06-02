@@ -14,6 +14,9 @@ frontend/js/config.js
 data/
 excels/
 
+# Archivos de texto locales (datos / notas)
+*.txt
+
 # Flujos n8n (contienen IDs y credenciales internas)
 n8n/
 

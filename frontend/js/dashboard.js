@@ -10,7 +10,7 @@ const mesActual = now.getMonth();
 let miembros     = [];
 let backupData   = [];
 let labelES      = {};
-let tabActiva    = 'personal';
+let tabActiva    = 'mensual';
 let subtabActiva = 'eq-mes';
 
 // Conversión entre la tabla de horas (plan en HORAS) y el backup (ejecutado en DÍAS)
@@ -189,17 +189,17 @@ function renderPersonal(data) {
       : `<span style="color:#dc2626;font-weight:600">+${Math.abs(a.diferencia)}</span>`;
     const desc = labelES[a.codigo] || '';
     return `<tr class="${excedido ? 'fila-excedida' : ''}">
-      <td>
+      <td data-label="Actividad" class="celda-titulo">
         ${desc
           ? `<span style="color:var(--accent);font-weight:600">${a.codigo}</span>
              <strong style="margin-left:6px">${desc.replace(/^\d+-\d+\.\s*/, '')}</strong>`
           : `<strong style="color:var(--accent)">${a.codigo}</strong>`
         }
       </td>
-      <td style="font-weight:500;color:var(--accent)">${a.planificado}</td>
-      <td style="font-weight:500;color:var(--teal)">${a.ejecutado}</td>
-      <td>${rest}</td>
-      <td>${badge}</td>
+      <td data-label="Días Asignados" style="font-weight:500;color:var(--accent)">${a.planificado}</td>
+      <td data-label="Días Trabajados" style="font-weight:500;color:var(--teal)">${a.ejecutado}</td>
+      <td data-label="Días Pendientes">${rest}</td>
+      <td data-label="% Completado">${badge}</td>
     </tr>`;
   }).join('');
 }
@@ -230,11 +230,11 @@ function renderMensual(nombre) {
   tbody.innerHTML = registros
     .sort((a, b) => parseInt(a[3]) - parseInt(b[3]))
     .map(r => `<tr>
-      <td>${r[3]}</td>
-      <td><strong>${r[11] || r[7].split(' ')[0]}</strong></td>
-      <td style="font-size:12px;color:var(--text-muted)">${r[8] || ''}</td>
-      <td>${r[6] === 'Remote' ? 'Virtual' : 'Presencial'}</td>
-      <td>${r[13]}</td>
+      <td data-label="Día">${r[3]}</td>
+      <td data-label="Código" class="celda-titulo"><strong>${r[11] || r[7].split(' ')[0]}</strong></td>
+      <td data-label="Actividad" style="font-size:12px;color:var(--text-muted)">${r[8] || ''}</td>
+      <td data-label="Lugar">${r[6] === 'Remote' ? 'Virtual' : 'Presencial'}</td>
+      <td data-label="Días">${r[13]}</td>
     </tr>`).join('');
 }
 

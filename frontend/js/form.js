@@ -21,18 +21,18 @@ for (let d = 1; d <= totalDias; d++) {
 
 // ── Carga de datos desde n8n ────────────────────────────────────────────────
 
-let actividadesData = [];
+let categoriasData = [];
+let categoriaActual = null;
 
 async function cargarDatos() {
   setStatus('loading', 'Cargando datos...');
   try {
     const res = await fetch(CONFIG.N8N_REFDATA);
     if (!res.ok) throw new Error('n8n respondió con error');
-    const { miembros, actividades } = await res.json();
+    const { miembros, categorias } = await res.json();
 
     miembros.forEach(m => document.getElementById('nombre').add(new Option(m, m)));
-    actividadesData = actividades;
-    renderPickerList(actividades);
+    categoriasData = categorias;
     setStatus('ok', 'Conectado · Google Drive listo');
   } catch (e) {
     console.warn('n8n no disponible:', e.message);
@@ -50,21 +50,48 @@ const pickerList    = document.getElementById('actividad-list');
 const closeBtn      = document.getElementById('actividad-close');
 const hiddenActividad = document.getElementById('actividad');
 
-function renderPickerList(items) {
+function renderCategorias() {
   pickerList.innerHTML = '';
-  const current = hiddenActividad.value;
-  items.forEach(a => {
+  searchInput.placeholder = 'Buscar categoría...';
+  const q = searchInput.value.toLowerCase();
+  const filtradas = categoriasData.filter(c => c.nombre.toLowerCase().includes(q));
+  filtradas.forEach(cat => {
     const li = document.createElement('li');
-    li.textContent = a;
-    if (a === current) li.classList.add('selected');
+    li.textContent = cat.nombre;
+    li.addEventListener('click', () => {
+      categoriaActual = cat;
+      searchInput.value = '';
+      renderActividades(cat.actividades);
+    });
+    pickerList.appendChild(li);
+  });
+}
+
+function renderActividades(items) {
+  pickerList.innerHTML = '';
+  searchInput.placeholder = 'Buscar actividad...';
+
+  // Botón volver
+  const back = document.createElement('li');
+  back.textContent = '← Volver a categorías';
+  back.style.cssText = 'color:var(--accent);font-weight:500;font-size:13px;';
+  back.addEventListener('click', () => { searchInput.value = ''; categoriaActual = null; renderCategorias(); });
+  pickerList.appendChild(back);
+
+  const q = searchInput.value.toLowerCase();
+  const filtradas = items.filter(a => a.label.toLowerCase().includes(q));
+  filtradas.forEach(a => {
+    const li = document.createElement('li');
+    li.textContent = a.label;
+    if (a.value === hiddenActividad.value) li.classList.add('selected');
     li.addEventListener('click', () => selectActividad(a));
     pickerList.appendChild(li);
   });
 }
 
-function selectActividad(value) {
-  hiddenActividad.value = value;
-  triggerLabel.textContent = value;
+function selectActividad(item) {
+  hiddenActividad.value = item.value;
+  triggerLabel.textContent = `${categoriaActual.nombre} · ${item.label}`;
   trigger.classList.add('filled');
   trigger.style.borderColor = '';
   closePicker();
@@ -72,7 +99,8 @@ function selectActividad(value) {
 
 function openPicker() {
   searchInput.value = '';
-  renderPickerList(actividadesData);
+  categoriaActual = null;
+  renderCategorias();
   overlay.hidden = false;
   searchInput.focus();
 }
@@ -86,10 +114,6 @@ trigger.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' 
 closeBtn.addEventListener('click', closePicker);
 overlay.addEventListener('click', e => { if (e.target === overlay) closePicker(); });
 
-searchInput.addEventListener('input', () => {
-  const q = searchInput.value.toLowerCase();
-  renderPickerList(actividadesData.filter(a => a.toLowerCase().includes(q)));
-});
 
 // ── Modal de confirmación ───────────────────────────────────────────────────
 
@@ -99,14 +123,16 @@ const btnConfirm = document.getElementById('btn-confirmar');
 
 let pendingPayload = null;
 
+const LUGAR_ES = { 'Remote': 'Virtual', 'Field': 'Presencial' };
+
 function showModal(payload) {
   pendingPayload = payload;
-  document.getElementById('conf-nombre').textContent   = payload.nombre;
-  document.getElementById('conf-dia').textContent      = selDia.options[selDia.selectedIndex].text;
-  document.getElementById('conf-tiempo').textContent   =
+  document.getElementById('conf-nombre').textContent    = payload.nombre;
+  document.getElementById('conf-dia').textContent       = selDia.options[selDia.selectedIndex].text;
+  document.getElementById('conf-tiempo').textContent    =
     payload.days_worked === '0.5' ? '0.5 — Medio día' : '1 — Día completo';
-  document.getElementById('conf-lugar').textContent    = payload.lugar;
-  document.getElementById('conf-actividad').textContent = payload.actividad;
+  document.getElementById('conf-lugar').textContent     = LUGAR_ES[payload.lugar] || payload.lugar;
+  document.getElementById('conf-actividad').textContent = triggerLabel.textContent;
   modal.hidden = false;
 }
 

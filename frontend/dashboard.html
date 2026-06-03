@@ -13,7 +13,7 @@
 
 <header>
   <a class="logo" href="#">
-    ISF Peru · Timesheet
+    ISF Café Seguro Perú· Timesheet 
   </a>
   <nav>
     <a href="/asistencia">Registro</a>
@@ -33,8 +33,7 @@
     <div class="dash-tabs">
       <button class="dash-tab active" data-tab="mensual">Avance mensual</button>
       <button class="dash-tab" data-tab="personal">Mi progreso</button>
-      <!-- Equipo: oculto temporalmente, se presentará al final -->
-      <button class="dash-tab" data-tab="equipo" style="display:none">Equipo</button>
+      <button class="dash-tab" data-tab="equipo">Equipo</button>
     </div>
   </div>
 
@@ -119,7 +118,7 @@
       <div style="overflow-x:auto">
         <table>
           <thead>
-            <tr><th>Día</th><th>Código</th><th>Actividad</th><th>Lugar</th><th>Días</th></tr>
+            <tr><th>Día</th><th>Código</th><th>Actividad</th><th>Modalidad</th><th>Días</th></tr>
           </thead>
           <tbody id="mensual-body">
             <tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Selecciona un miembro</td></tr>
@@ -168,14 +167,21 @@
       <button class="dash-tab" data-subtab="eq-proyecto">Por sección</button>
     </div>
 
-    <!-- Equipo por mes: línea acumulada -->
+    <!-- Equipo por mes: matriz de participación -->
     <div id="eq-mes">
-      <div class="card" style="margin-top:0">
+      <div class="field" style="max-width:200px">
+        <label>Mes</label>
+        <select id="sel-mes-equipo"></select>
+      </div>
+      <div class="card" style="margin-top:0;max-width:100%">
         <div class="card-header">
-          <span class="card-title">Avance acumulado en el tiempo</span>
+          <span class="card-title">Participación del equipo</span>
+          <span class="badge teal" id="eq-mes-badge">—</span>
         </div>
-        <div style="position:relative;height:380px;padding:20px 0">
-          <canvas id="chart-equipo-mes"></canvas>
+        <div class="matriz-wrap">
+          <div id="eq-mes-matriz">
+            <p style="text-align:center;color:var(--text-muted);padding:32px">Cargando…</p>
+          </div>
         </div>
       </div>
     </div>

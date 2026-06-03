@@ -75,10 +75,11 @@ main {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   width: 100%;
   max-width: 620px;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
 }
 
 .card-header {
@@ -380,15 +381,19 @@ button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
 .mini-label.completado { color: var(--teal); }
 .mini-label.excedido   { color: #dc2626; }
 
-/* Filas alternas (zebra) con dos tonos de cian para separar cada actividad */
-#horas-body tr:nth-child(odd),
-#mensual-body tr:nth-child(odd) { background: #EAFBF9; }
+/* Filas alternas (zebra) suave sobre fondo blanco */
 #horas-body tr:nth-child(even),
-#mensual-body tr:nth-child(even) { background: #DCEBFB; }
+#mensual-body tr:nth-child(even) { background: #f0faf9; }
+#horas-body tr:hover,
+#mensual-body tr:hover { background: #e6f7f5; }
 
-/* La fila excedida (rojo) siempre tiene prioridad sobre el zebra */
+/* La fila excedida mantiene prioridad */
 #horas-body tr.fila-excedida { background: #fff5f5; }
 #horas-body tr.fila-excedida:hover { background: #fee2e2; }
+
+/* Día: mostrar solo número en desktop, solo texto completo en móvil */
+.dia-full { display: none; }
+.dia-num  { display: inline; }
 
 table { width: 100%; border-collapse: collapse; font-size: 15px; }
 th { text-align: left; font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 14px; border-bottom: 1px solid var(--border); }
@@ -401,6 +406,13 @@ tr:last-child td { border-bottom: none; }
   .dash-main { padding: 20px 14px; }
   .stat-row,
   .stat-row-3 { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+  /* Día completo en móvil */
+  .dia-num  { display: none; }
+  .dia-full { display: inline; font-weight: 600; color: var(--accent); font-size: 14px; }
+
+  /* Columna Código: ocultar en móvil (la descripción ya lo identifica) */
+  .cod-col { display: none; }
   .stat-card { padding: 14px 16px; }
   .stat-value { font-size: 22px; }
   .dash-top { flex-direction: column; align-items: stretch; }
@@ -755,4 +767,113 @@ tr:last-child td { border-bottom: none; }
 
 @media (max-width: 600px) {
   .conn-status { bottom: 10px; right: 10px; left: 10px; justify-content: center; }
+}
+
+/* ── Matriz de participación del equipo ── */
+.matriz-wrap { overflow-x: auto; padding: 0 4px 16px; }
+
+.matriz-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+}
+
+.matriz-table thead tr {
+  background: var(--bg);
+}
+
+.matriz-table th {
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+.matriz-table th.matriz-nombre { text-align: left; padding-left: 20px; min-width: 170px; }
+.matriz-table th.matriz-sec    { min-width: 48px; cursor: default; }
+.matriz-table th.matriz-total  { color: var(--text); min-width: 56px; }
+
+/* Celdas */
+.matriz-nombre-cel {
+  padding: 9px 10px 9px 20px;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+
+.matriz-cel {
+  padding: 8px 6px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.matriz-cel-total {
+  padding: 9px 12px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Intensidad por días */
+.cel-bajo   { background: #E6FAF8; color: #00857a; }
+.cel-medio  { background: #BDEEF8; color: #00657a; }
+.cel-alto   { background: #F97048; color: #fff; }
+
+/* Fila alterna */
+.fila-par .matriz-nombre-cel,
+.fila-par .matriz-cel,
+.fila-par .matriz-cel-total { background-color: #fafafa; }
+
+/* Fila de totales */
+.fila-totales .matriz-nombre-cel {
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--bg);
+  border-top: 2px solid var(--border);
+}
+.fila-totales .matriz-cel { background: var(--bg); border-top: 2px solid var(--border); }
+.fila-totales .matriz-cel-footer { background: var(--bg); border-top: 2px solid var(--border); color: var(--teal); }
+
+/* Leyenda */
+.matriz-leyenda {
+  display: flex;
+  gap: 20px;
+  padding: 14px 20px 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.ley-item { display: flex; align-items: center; gap: 6px; }
+.ley-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.ley-dot.cel-bajo   { background: #E6FAF8; border: 1px solid #00C9B1; }
+.ley-dot.cel-medio  { background: #BDEEF8; border: 1px solid #0097b2; }
+.ley-dot.cel-alto   { background: #F97048; border: none; }
+
+@media (max-width: 600px) {
+  .matriz-table th.matriz-sec { min-width: 38px; font-size: 10px; }
+  .matriz-nombre-cel { font-size: 12px; min-width: 120px; }
+  .matriz-leyenda { flex-wrap: wrap; gap: 12px; }
 }

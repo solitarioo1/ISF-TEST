@@ -14,7 +14,7 @@ let tabActiva    = 'mensual';
 let subtabActiva = 'eq-mes';
 
 // Conversión entre la tabla de horas (plan en HORAS) y el backup (ejecutado en DÍAS)
-const HORAS_POR_DIA = 8;
+const HORAS_POR_DIA = 1;
 
 let equipoPlan = { planPorCodigo: {}, planTotal: 0 };
 
@@ -81,6 +81,7 @@ function poblarMeses() {
     if (nombre) renderMensual(nombre);
   });
 
+  document.getElementById('sel-mes-equipo')?.addEventListener('change', renderEquipoMes);
 }
 
 // ── Miembros ─────────────────────────────────────────────────────────────────
@@ -251,10 +252,13 @@ function renderMensual(nombre) {
   tbody.innerHTML = registros
     .sort((a, b) => parseInt(a[3]) - parseInt(b[3]))
     .map(r => `<tr>
-      <td data-label="Día">${r[3]}</td>
-      <td data-label="Código" class="celda-titulo"><strong>${r[11] || r[7].split(' ')[0]}</strong></td>
+      <td data-label="Día">
+        <span class="dia-num">${r[3]}</span>
+        <span class="dia-full">${r[3]} de ${mes}</span>
+      </td>
+      <td data-label="Código" class="celda-titulo cod-col"><strong>${r[11] || r[7].split(' ')[0]}</strong></td>
       <td data-label="Actividad" style="font-size:14px;color:#3f3f3a">${r[8] || ''}</td>
-      <td data-label="Lugar">${r[6] === 'Remote' ? 'Virtual' : 'Presencial'}</td>
+      <td data-label="Modalidad">${r[6] === 'Remote' ? 'Virtual' : 'Presencial'}</td>
       <td data-label="Días">${r[13]}</td>
     </tr>`).join('');
 }
@@ -323,76 +327,87 @@ function renderEquipoResumen() {
   });
 }
 
-// ── Equipo: avance acumulado en el tiempo (línea) ──────────────────────────────
+// ── Equipo: matriz de participación por mes ────────────────────────────────────
+
+const SECCIONES = ['1','2','3','4','5','6','7','8','9'];
+const SEC_LABEL = {
+  '1':'Distribución','2':'Modelo Climático','3':'Capacitación',
+  '4':'Tecnología','5':'Suscripción','6':'Pagos',
+  '7':'Reportes','8':'ISF Support','9':'Sostenibilidad'
+};
 
 function renderEquipoMes() {
-  // Agrupar ejecutado por mes-año, en orden cronológico
-  const porMes = {};
+  const selVal = document.getElementById('sel-mes-equipo')?.value;
+  if (!selVal) return;
+  const [mes, anio] = selVal.split('-');
+
+  // Construir matriz: persona → sección → días
+  const matriz = {};
+  const seccionesUsadas = new Set();
+
   backupData.forEach(r => {
-    const mi  = MES_IDX[r[4]] ?? 0;
-    const key = `${r[5]}-${String(mi).padStart(2, '0')}`;
-    porMes[key] = (porMes[key] || 0) + (parseFloat(r[13]) || 0);
+    if (r[4] !== mes || String(r[5]) !== anio) return;
+    const nombre  = r[2];
+    const seccion = (r[11] || '').split('-')[0];
+    const dias    = parseFloat(r[13]) || 0;
+    if (!nombre || !seccion || !SECCIONES.includes(seccion)) return;
+    if (!matriz[nombre]) matriz[nombre] = {};
+    matriz[nombre][seccion] = (matriz[nombre][seccion] || 0) + dias;
+    seccionesUsadas.add(seccion);
   });
 
-  const keys = Object.keys(porMes).sort();
-  const canvas = document.getElementById('chart-equipo-mes');
+  const contenedor = document.getElementById('eq-mes-matriz');
+  const personas   = Object.keys(matriz).sort();
+  const secs       = SECCIONES;
 
-  if (!keys.length) {
-    canvas.parentElement.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding-top:40px">Sin registros todavía</p>';
+  if (!personas.length) {
+    contenedor.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px">Sin registros este mes</p>';
+    document.getElementById('eq-mes-badge').textContent = '—';
     return;
   }
 
-  const labels = keys.map(k => {
-    const [a, m] = k.split('-');
-    return `${MESES[+m]} ${a.slice(2)}`;
+  document.getElementById('eq-mes-badge').textContent = `${personas.length} participantes · ${mes} ${anio}`;
+
+  const totalDias = personas.reduce((s, p) =>
+    s + secs.reduce((ss, sec) => ss + (matriz[p][sec] || 0), 0), 0);
+
+  // Cabecera
+  let html = '<table class="matriz-table"><thead><tr><th class="matriz-nombre">Miembro</th>';
+  secs.forEach(s => {
+    html += `<th class="matriz-sec" title="${SEC_LABEL[s] || ''}">${s}</th>`;
+  });
+  html += '<th class="matriz-total">Total</th></tr></thead><tbody>';
+
+  // Filas
+  personas.forEach((p, i) => {
+    const totalP = secs.reduce((s, sec) => s + (matriz[p][sec] || 0), 0);
+    html += `<tr class="${i % 2 === 0 ? 'fila-par' : ''}">`;
+    html += `<td class="matriz-nombre-cel">${p}</td>`;
+    secs.forEach(sec => {
+      const d = matriz[p][sec] || 0;
+      const cls = d === 0 ? '' : d <= 0.5 ? 'cel-bajo' : d <= 2 ? 'cel-medio' : 'cel-alto';
+      html += `<td class="matriz-cel ${cls}">${d > 0 ? d : ''}</td>`;
+    });
+    html += `<td class="matriz-cel-total">${totalP}</td></tr>`;
   });
 
-  // Ejecutado acumulado
-  let acum = 0;
-  const dataExec = keys.map(k => { acum += porMes[k]; return Math.round(acum * 10) / 10; });
-
-  // Meta: línea recta de 0 hasta el plan total, repartida en los meses con actividad
-  const plan = planTotalDias();
-  const dataMeta = keys.map((_, i) => Math.round(plan * (i + 1) / keys.length));
-
-  const ctx = canvas.getContext('2d');
-  if (chartEquipoMes) chartEquipoMes.destroy();
-
-  chartEquipoMes = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Meta acumulada',
-          data: dataMeta,
-          borderColor: '#9CA3AF',
-          borderDash: [6, 5],
-          pointRadius: 0,
-          tension: 0,
-          fill: false
-        },
-        {
-          label: 'Ejecutado acumulado',
-          data: dataExec,
-          borderColor: '#F97048',
-          backgroundColor: 'rgba(249,112,72,0.10)',
-          pointRadius: 4,
-          pointBackgroundColor: '#F97048',
-          tension: 0.25,
-          fill: true
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { position: 'top' } },
-      scales: {
-        y: { beginAtZero: true, title: { display: true, text: 'Días acumulados' } }
-      }
-    }
+  // Fila totales
+  html += '<tr class="fila-totales"><td class="matriz-nombre-cel">Total equipo</td>';
+  secs.forEach(sec => {
+    const tot = personas.reduce((s, p) => s + (matriz[p][sec] || 0), 0);
+    html += `<td class="matriz-cel matriz-cel-footer">${tot > 0 ? tot : ''}</td>`;
   });
+  html += `<td class="matriz-cel-total matriz-cel-footer">${totalDias}</td></tr>`;
+  html += '</tbody></table>';
+
+  // Leyenda
+  html += `<div class="matriz-leyenda">
+    <span class="ley-item"><span class="ley-dot cel-bajo"></span>≤ 0.5 días</span>
+    <span class="ley-item"><span class="ley-dot cel-medio"></span>1–2 días</span>
+    <span class="ley-item"><span class="ley-dot cel-alto"></span>> 2 días</span>
+  </div>`;
+
+  contenedor.innerHTML = html;
 }
 
 // ── Equipo: distribución por sección (dona) ────────────────────────────────────

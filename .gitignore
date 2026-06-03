@@ -16,6 +16,10 @@ excels/
 
 # Archivos de texto locales (datos / notas)
 *.txt
+*.tsv
+
+# Scripts utilitarios locales
+scripts/
 
 # Flujos n8n (contienen IDs y credenciales internas)
 n8n/

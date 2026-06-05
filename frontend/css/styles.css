@@ -365,10 +365,11 @@ button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
   transition: width 0.4s ease;
 }
 
-.mini-bar-fill.pendiente  { background: #d1d5db; }
-.mini-bar-fill.progreso   { background: #3b82f6; }
-.mini-bar-fill.completado { background: var(--teal); }
-.mini-bar-fill.excedido   { background: #f87171; }
+.mini-bar-fill.pendiente   { background: #d1d5db; }
+.mini-bar-fill.progreso    { background: var(--teal); }
+.mini-bar-fill.completado  { background: var(--teal); }
+.mini-bar-fill.advertencia { background: #f59e0b; }
+.mini-bar-fill.excedido    { background: #f87171; }
 
 .mini-label {
   font-size: 11px;
@@ -376,10 +377,11 @@ button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
   letter-spacing: 0.02em;
 }
 
-.mini-label.pendiente  { color: #9ca3af; }
-.mini-label.progreso   { color: #3b82f6; }
-.mini-label.completado { color: var(--teal); }
-.mini-label.excedido   { color: #ef4444; }
+.mini-label.pendiente   { color: #9ca3af; }
+.mini-label.progreso    { color: var(--teal); }
+.mini-label.completado  { color: var(--teal); }
+.mini-label.advertencia { color: #d97706; }
+.mini-label.excedido    { color: #ef4444; }
 
 /* Filas alternas (zebra) suave sobre fondo blanco */
 #horas-body tr:nth-child(even),
@@ -390,6 +392,23 @@ button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
 /* La fila excedida mantiene prioridad */
 #horas-body tr.fila-excedida { background: #fff8f8; }
 #horas-body tr.fila-excedida:hover { background: #fee2e2; }
+
+/* Control presupuestal */
+#control-body tr.fila-advertencia { background: #fffbeb; }
+#control-body tr.fila-advertencia:hover { background: #fef3c7; }
+#control-body tr.fila-excedida { background: #fff8f8; }
+#control-body tr.fila-excedida:hover { background: #fee2e2; }
+
+.obs-chip {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin: 1px 2px;
+}
+.obs-exc { color: #dc2626; background: #fef2f2; border: 1px solid #fecaca; }
+.obs-sin { color: #d97706; background: #fffbeb; border: 1px solid #fde68a; }
 
 /* Separador entre actividades asignadas y no asignadas */
 #horas-body tr.fila-separador td {

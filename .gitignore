@@ -28,6 +28,9 @@ n8n/
 guia.md
 guia.v2.md
 
+# Claude Code memory
+.claude/
+
 # OS
 .DS_Store
 Thumbs.db

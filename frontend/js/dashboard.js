@@ -20,7 +20,7 @@ let equipoPlan = { planPorCodigo: {}, planTotal: 0 };
 
 let chartEquipoGlobal  = null;
 let chartEquipoMes     = null;
-let chartEquipoSeccion = null;
+let controlData        = null;
 
 // ── Trimestres ────────────────────────────────────────────────────────────────
 // Q1 es especial: Dic 2025 + Ene/Feb/Mar 2026
@@ -176,7 +176,7 @@ document.querySelectorAll('.dash-top .dash-tab').forEach(btn => {
     if (tabActiva === 'mensual'  && nombre) renderMensual(nombre);
     if (tabActiva === 'equipo') {
       renderEquipoResumen();
-      if (subtabActiva === 'eq-proyecto') renderEquipoSeccion();
+      if (subtabActiva === 'eq-proyecto') cargarControl();
       else renderEquipoMes();
     }
   });
@@ -190,7 +190,7 @@ document.querySelectorAll('#equipo-subtabs .dash-tab').forEach(btn => {
     subtabActiva = btn.dataset.subtab;
     document.getElementById('eq-mes').hidden      = subtabActiva !== 'eq-mes';
     document.getElementById('eq-proyecto').hidden = subtabActiva !== 'eq-proyecto';
-    if (subtabActiva === 'eq-proyecto') renderEquipoSeccion();
+    if (subtabActiva === 'eq-proyecto') cargarControl();
     else renderEquipoMes();
   });
 });
@@ -468,56 +468,83 @@ function renderEquipoMes() {
 
 // ── Equipo: distribución por sección (dona) ────────────────────────────────────
 
-function renderEquipoSeccion() {
-  // Agrupar ejecutado por sección (categoria_ES)
-  const grupos = {};
-  backupData.forEach(r => {
-    const cat = r[10] || 'Sin sección';
-    grupos[cat] = (grupos[cat] || 0) + (parseFloat(r[13]) || 0);
-  });
+async function cargarControl() {
+  const contenedor = document.getElementById('eq-proyecto');
+  if (controlData) { renderControl(controlData); return; }
+  contenedor.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px">Cargando…</p>';
+  try {
+    const res = await fetch(CONFIG.N8N_CONTROL);
+    const data = await res.json();
+    controlData = data;
+    renderControl(data);
+  } catch {
+    contenedor.innerHTML = '<p style="text-align:center;color:#dc2626;padding:32px">Error al cargar datos</p>';
+  }
+}
 
-  const entradas = Object.entries(grupos).sort((a, b) => b[1] - a[1]);
-  const canvas = document.getElementById('chart-equipo-seccion');
-
-  if (!entradas.length) {
-    canvas.parentElement.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding-top:40px">Sin datos</p>';
+function renderControl(data) {
+  const { actividades } = data;
+  const contenedor = document.getElementById('eq-proyecto');
+  if (!actividades?.length) {
+    contenedor.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px">Sin datos</p>';
     return;
   }
 
-  const labels = entradas.map(([cat]) => cat);
-  const datos  = entradas.map(([, d]) => Math.round(d * 10) / 10);
+  const fmt = n => '€' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const ctx = canvas.getContext('2d');
-  if (chartEquipoSeccion) chartEquipoSeccion.destroy();
+  const filas = actividades.map(a => {
+    const estado   = a.pct > 100 ? 'excedido' : a.pct >= 90 ? 'advertencia' : 'completado';
+    const rowClass = a.pct > 100 ? 'fila-excedida' : a.pct >= 90 ? 'fila-advertencia' : '';
+    const badge    = `<div class="mini-progress">
+      <div class="mini-bar-track">
+        <div class="mini-bar-fill ${estado}" style="width:${Math.min(a.pct, 100)}%"></div>
+      </div>
+      <span class="mini-label ${estado}">${a.pct}%</span>
+    </div>`;
+    const obsHTML = a.observados?.length
+      ? a.observados.map(o => {
+          const [nombre, tipo] = typeof o === 'string' ? o.split('·') : [o.nombre, o.motivo];
+          const cls = tipo === 'exc' || tipo === 'excedió' ? 'exc' : 'sin';
+          return `<span class="obs-chip obs-${cls}">${nombre}</span>`;
+        }).join('')
+      : '<span style="color:#9ca3af;font-size:11px">—</span>';
+    return `<tr class="${rowClass}">
+      <td><strong style="color:var(--accent)">${a.codigo}</strong></td>
+      <td style="text-align:center">${a.diasPlan}</td>
+      <td style="text-align:center;color:var(--teal);font-weight:600">${a.diasEjec}</td>
+      <td style="text-align:right">${fmt(a.montoEstimado)}</td>
+      <td style="text-align:right;font-weight:600">${fmt(a.montoReal)}</td>
+      <td>${badge}</td>
+      <td>${obsHTML}</td>
+    </tr>`;
+  }).join('');
 
-  chartEquipoSeccion = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels,
-      datasets: [{
-        data: datos,
-        backgroundColor: labels.map((_, i) => COLORES[i % COLORES.length]),
-        borderColor: '#fff',
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'right', labels: { font: { size: 12 }, padding: 12, boxWidth: 14 } },
-        tooltip: {
-          callbacks: {
-            label: c => {
-              const total = datos.reduce((s, v) => s + v, 0);
-              const p = total > 0 ? Math.round(c.parsed / total * 100) : 0;
-              return ` ${c.parsed} días (${p}%)`;
-            }
-          }
-        }
-      }
-    }
-  });
+  contenedor.innerHTML = `
+    <div class="card" style="margin-top:0">
+      <div class="card-header">
+        <span class="card-title">Control presupuestal por actividad</span>
+        <div class="matriz-leyenda" style="margin:0">
+          <span class="ley-item"><span class="obs-chip obs-exc">nombre</span> Excedió días</span>
+          <span class="ley-item"><span class="obs-chip obs-sin">nombre</span> Sin asignar</span>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Actividad</th>
+              <th style="text-align:center">Días Plan</th>
+              <th style="text-align:center;color:var(--teal)">Días Ejec</th>
+              <th style="text-align:right">Monto Estimado</th>
+              <th style="text-align:right;color:var(--accent)">Monto Real</th>
+              <th>% Consumo</th>
+              <th>Observados</th>
+            </tr>
+          </thead>
+          <tbody id="control-body">${filas}</tbody>
+        </table>
+      </div>
+    </div>`;
 }
 
 // ── Helper toast ──────────────────────────────────────────────────────────────

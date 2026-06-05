@@ -53,7 +53,7 @@ async function checkDias() {
   if (!nombre) { diasRegistrados = []; marcarDias(); return; }
   try {
     const url = `${CONFIG.N8N_CHECK}?nombre=${encodeURIComponent(nombre)}&mes=${CONFIG.MESES[mesSeleccionado]}&anio=${now.getFullYear()}`;
-    const res = await fetch(url);
+    const res = await apiFetch(url);
     const data = await res.json();
     diasRegistrados = data.diasRegistrados || [];
   } catch { diasRegistrados = []; }
@@ -81,7 +81,7 @@ let codigosAsignados = null; // null = sin filtro, [] = sin asignaciones
 
 async function cargarActividadesAsignadas(nombre) {
   try {
-    const res  = await fetch(`${CONFIG.N8N_ACTIVIDADES}?nombre=${encodeURIComponent(nombre)}`);
+    const res  = await apiFetch(`${CONFIG.N8N_ACTIVIDADES}?nombre=${encodeURIComponent(nombre)}`);
     const data = await res.json();
     codigosAsignados = data.codigos || [];
   } catch { codigosAsignados = null; }
@@ -103,7 +103,7 @@ function categoriasFiltradas() {
 async function cargarDatos() {
   setStatus('loading', 'Cargando datos...');
   try {
-    const res = await fetch(CONFIG.N8N_REFDATA);
+    const res = await apiFetch(CONFIG.N8N_REFDATA);
     if (!res.ok) throw new Error('n8n respondió con error');
     const { miembros, categorias } = await res.json();
 
@@ -253,8 +253,8 @@ btnConfirm.addEventListener('click', async () => {
   try {
     const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pendingPayload) };
     const [r] = await Promise.all([
-      fetch(CONFIG.N8N_SUBMIT, opts),
-      fetch(CONFIG.N8N_BACKUP, opts).catch(() => {}),
+      apiFetch(CONFIG.N8N_SUBMIT, opts),
+      apiFetch(CONFIG.N8N_BACKUP, opts).catch(() => {}),
     ]);
     if (!r.ok) throw new Error('n8n respondió con error');
     closeModal();

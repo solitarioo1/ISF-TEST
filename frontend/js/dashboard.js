@@ -93,7 +93,7 @@ function setConexion(estado, texto) {
 
 async function cargarEquipoPlan() {
   try {
-    const res  = await fetch(CONFIG.N8N_DASHBOARD);
+    const res  = await apiFetch(CONFIG.N8N_DASHBOARD);
     const data = await res.json();
     const obj  = Array.isArray(data) ? data[0] : data;
     if (obj?.equipo) equipoPlan = obj.equipo;
@@ -127,7 +127,7 @@ function poblarMeses() {
 
 async function cargarMiembros() {
   try {
-    const res = await fetch(CONFIG.N8N_REFDATA);
+    const res = await apiFetch(CONFIG.N8N_REFDATA);
     const { miembros: m, categorias } = await res.json();
     miembros = m;
     const sel = document.getElementById('dash-nombre');
@@ -155,7 +155,7 @@ document.getElementById('dash-nombre').addEventListener('change', async function
 
 async function cargarBackupCompleto() {
   try {
-    const res  = await fetch(CONFIG.N8N_BACKUP_ALL);
+    const res  = await apiFetch(CONFIG.N8N_BACKUP_ALL);
     const data = await res.json();
     backupData = data.registros || [];
   } catch { backupData = []; }
@@ -203,7 +203,7 @@ async function cargarPersonal(nombre) {
   try {
     const q   = trimestreSeleccionado !== 'Acumulado' ? `&trimestre=${trimestreSeleccionado}` : '';
     const url = `${CONFIG.N8N_DASHBOARD}?nombre=${encodeURIComponent(nombre)}${q}`;
-    const res  = await fetch(url);
+    const res  = await apiFetch(url);
     const data = await res.json();
     renderPersonal(data);
   } catch {
@@ -473,7 +473,7 @@ async function cargarControl() {
   if (controlData) { renderControl(controlData); return; }
   contenedor.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px">Cargando…</p>';
   try {
-    const res = await fetch(CONFIG.N8N_CONTROL);
+    const res = await apiFetch(CONFIG.N8N_CONTROL);
     const data = await res.json();
     controlData = data;
     renderControl(data);

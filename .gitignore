@@ -27,6 +27,7 @@ n8n/
 # Guías internas
 guia.md
 guia.v2.md
+seguridad.md
 
 # Claude Code memory
 .claude/

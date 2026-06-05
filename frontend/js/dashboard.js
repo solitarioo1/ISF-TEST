@@ -22,10 +22,49 @@ let chartEquipoGlobal  = null;
 let chartEquipoMes     = null;
 let chartEquipoSeccion = null;
 
+// ── Trimestres ────────────────────────────────────────────────────────────────
+// Q1 es especial: Dic 2025 + Ene/Feb/Mar 2026
+const TRIMESTRES = {
+  Q1: [{ mes: 'Dic', anio: 2025 }, { mes: 'Ene', anio: 2026 }, { mes: 'Feb', anio: 2026 }, { mes: 'Mar', anio: 2026 }],
+  Q2: [{ mes: 'Abr', anio: 2026 }, { mes: 'May', anio: 2026 }, { mes: 'Jun', anio: 2026 }],
+  Q3: [{ mes: 'Jul', anio: 2026 }, { mes: 'Ago', anio: 2026 }, { mes: 'Sep', anio: 2026 }],
+  Q4: [{ mes: 'Oct', anio: 2026 }, { mes: 'Nov', anio: 2026 }, { mes: 'Dic', anio: 2026 }],
+};
+
+function trimestreActual() {
+  const m = mesActual;
+  if (m === 11 || m <= 2) return 'Q1';
+  if (m <= 5) return 'Q2';
+  if (m <= 8) return 'Q3';
+  return 'Q4';
+}
+
+let trimestreSeleccionado = 'Acumulado';
+
+function renderTrimestresPersonal() {
+  const container = document.getElementById('trimestre-chips');
+  if (!container) return;
+  container.innerHTML = '';
+  ['Acumulado', ...Object.keys(TRIMESTRES)].forEach(q => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'mes-chip' + (q === trimestreSeleccionado ? ' active' : '');
+    chip.textContent = q;
+    chip.addEventListener('click', async () => {
+      trimestreSeleccionado = q;
+      renderTrimestresPersonal();
+      const nombre = document.getElementById('dash-nombre').value;
+      if (nombre) await cargarPersonal(nombre);
+    });
+    container.appendChild(chip);
+  });
+}
+
 // ── Boot ─────────────────────────────────────────────────────────────────────
 
 async function init() {
   poblarMeses();
+  renderTrimestresPersonal();
   setConexion('loading', 'Cargando datos…');
   await Promise.all([cargarMiembros(), cargarBackupCompleto(), cargarEquipoPlan()]);
   if (miembros.length > 0) {
@@ -162,7 +201,9 @@ async function cargarPersonal(nombre) {
   document.getElementById('horas-body').innerHTML =
     '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Cargando...</td></tr>';
   try {
-    const res  = await fetch(`${CONFIG.N8N_DASHBOARD}?nombre=${encodeURIComponent(nombre)}`);
+    const q   = trimestreSeleccionado !== 'Acumulado' ? `&trimestre=${trimestreSeleccionado}` : '';
+    const url = `${CONFIG.N8N_DASHBOARD}?nombre=${encodeURIComponent(nombre)}${q}`;
+    const res  = await fetch(url);
     const data = await res.json();
     renderPersonal(data);
   } catch {
@@ -191,15 +232,28 @@ function renderPersonal(data) {
     return;
   }
 
-  tbody.innerHTML = actividades.map(a => {
-    const pctA    = a.planificado > 0 ? Math.round((a.ejecutado / a.planificado) * 100) : 0;
-    const excedido = pctA > 100;
-    const estado  = a.ejecutado === 0 ? 'pendiente' : excedido ? 'excedido' : pctA >= 80 ? 'completado' : 'progreso';
-    const labelTxt = a.ejecutado === 0
+  const asignadas   = actividades.filter(a => a.planificado > 0);
+  const sinAsignar  = actividades.filter(a => a.planificado === 0 && a.ejecutado > 0);
+  const separador   = sinAsignar.length > 0
+    ? `<tr class="fila-separador"><td colspan="5">Actividades no asignadas</td></tr>`
+    : '';
+
+  const filaHTML = (a) => {
+    const pctA      = a.planificado > 0 ? Math.round((a.ejecutado / a.planificado) * 100) : 0;
+    const sinAsignar = a.planificado === 0 && a.ejecutado > 0;
+    const excedido   = sinAsignar || pctA > 100;
+    const estado     = a.ejecutado === 0 ? 'pendiente'
+                     : sinAsignar        ? 'excedido'
+                     : pctA > 100        ? 'excedido'
+                     : pctA >= 80        ? 'completado'
+                     : 'progreso';
+    const labelTxt   = a.ejecutado === 0
       ? 'Pendiente'
-      : excedido
-        ? `Excedió ${Math.abs(a.diferencia)} día${Math.abs(a.diferencia) !== 1 ? 's' : ''}`
-        : pctA >= 80 ? `Completado · ${pctA}%` : `En progreso · ${pctA}%`;
+      : sinAsignar
+        ? `Sin asignar · +${a.ejecutado} día${a.ejecutado !== 1 ? 's' : ''}`
+        : pctA > 100
+          ? `Excedió ${Math.abs(a.diferencia)} día${Math.abs(a.diferencia) !== 1 ? 's' : ''}`
+          : pctA >= 80 ? `Completado · ${pctA}%` : `En progreso · ${pctA}%`;
     const badge   = `<div class="mini-progress">
       <div class="mini-bar-track">
         <div class="mini-bar-fill ${estado}" style="width:${Math.min(pctA,100)}%"></div>
@@ -223,7 +277,9 @@ function renderPersonal(data) {
       <td data-label="Días Pendientes">${rest}</td>
       <td data-label="% Completado">${badge}</td>
     </tr>`;
-  }).join('');
+  };
+
+  tbody.innerHTML = asignadas.map(filaHTML).join('') + separador + sinAsignar.map(filaHTML).join('');
 }
 
 // ── Tab: Por mes ──────────────────────────────────────────────────────────────
@@ -253,7 +309,7 @@ function renderMensual(nombre) {
     .sort((a, b) => parseInt(a[3]) - parseInt(b[3]))
     .map(r => `<tr>
       <td data-label="Día">
-        <span class="dia-num">${r[3]}</span>
+        <span class="dia-num">${r[3]} ${mes}</span>
         <span class="dia-full">${r[3]} de ${mes}</span>
       </td>
       <td data-label="Código" class="celda-titulo cod-col"><strong>${r[11] || r[7].split(' ')[0]}</strong></td>

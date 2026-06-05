@@ -366,9 +366,9 @@ button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 .mini-bar-fill.pendiente  { background: #d1d5db; }
-.mini-bar-fill.progreso   { background: var(--accent); }
+.mini-bar-fill.progreso   { background: #3b82f6; }
 .mini-bar-fill.completado { background: var(--teal); }
-.mini-bar-fill.excedido   { background: #dc2626; }
+.mini-bar-fill.excedido   { background: #f87171; }
 
 .mini-label {
   font-size: 11px;
@@ -377,9 +377,9 @@ button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 .mini-label.pendiente  { color: #9ca3af; }
-.mini-label.progreso   { color: var(--accent); }
+.mini-label.progreso   { color: #3b82f6; }
 .mini-label.completado { color: var(--teal); }
-.mini-label.excedido   { color: #dc2626; }
+.mini-label.excedido   { color: #ef4444; }
 
 /* Filas alternas (zebra) suave sobre fondo blanco */
 #horas-body tr:nth-child(even),
@@ -388,8 +388,21 @@ button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
 #mensual-body tr:hover { background: #e6f7f5; }
 
 /* La fila excedida mantiene prioridad */
-#horas-body tr.fila-excedida { background: #fff5f5; }
+#horas-body tr.fila-excedida { background: #fff8f8; }
 #horas-body tr.fila-excedida:hover { background: #fee2e2; }
+
+/* Separador entre actividades asignadas y no asignadas */
+#horas-body tr.fila-separador td {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3af;
+  background: #f9fafb;
+  border-top: 2px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
 
 /* Día: mostrar solo número en desktop, solo texto completo en móvil */
 .dia-full { display: none; }

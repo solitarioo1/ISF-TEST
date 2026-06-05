@@ -77,6 +77,28 @@ function marcarDias() {
 
 let categoriasData = [];
 let categoriaActual = null;
+let codigosAsignados = null; // null = sin filtro, [] = sin asignaciones
+
+async function cargarActividadesAsignadas(nombre) {
+  try {
+    const res  = await fetch(`${CONFIG.N8N_ACTIVIDADES}?nombre=${encodeURIComponent(nombre)}`);
+    const data = await res.json();
+    codigosAsignados = data.codigos || [];
+  } catch { codigosAsignados = null; }
+}
+
+function categoriasFiltradas() {
+  if (!codigosAsignados) return categoriasData;
+  return categoriasData
+    .map(cat => ({
+      ...cat,
+      actividades: cat.actividades.filter(a => {
+        const codigo = a.label.match(/^(\d+-\d+)/)?.[1];
+        return codigo && codigosAsignados.includes(codigo);
+      })
+    }))
+    .filter(cat => cat.actividades.length > 0);
+}
 
 async function cargarDatos() {
   setStatus('loading', 'Cargando datos...');
@@ -88,7 +110,12 @@ async function cargarDatos() {
     miembros.forEach(m => document.getElementById('nombre').add(new Option(m, m)));
     categoriasData = categorias;
     setStatus('ok', 'Conectado · Google Drive listo');
-    document.getElementById('nombre').addEventListener('change', checkDias);
+    document.getElementById('nombre').addEventListener('change', async () => {
+      const nombre = document.getElementById('nombre').value;
+      codigosAsignados = null;
+      if (nombre) await cargarActividadesAsignadas(nombre);
+      checkDias();
+    });
   } catch (e) {
     console.warn('n8n no disponible:', e.message);
     setStatus('ok', 'Sin conexión a Drive');
@@ -109,7 +136,7 @@ function renderCategorias() {
   pickerList.innerHTML = '';
   searchInput.placeholder = 'Buscar categoría...';
   const q = searchInput.value.toLowerCase();
-  const filtradas = categoriasData.filter(c => c.nombre.toLowerCase().includes(q));
+  const filtradas = categoriasFiltradas().filter(c => c.nombre.toLowerCase().includes(q));
   filtradas.forEach(cat => {
     const li = document.createElement('li');
     li.textContent = cat.nombre;

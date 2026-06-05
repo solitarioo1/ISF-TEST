@@ -509,13 +509,13 @@ function renderControl(data) {
         }).join('')
       : '<span style="color:#9ca3af;font-size:11px">—</span>';
     return `<tr class="${rowClass}">
-      <td><strong style="color:var(--accent)">${a.codigo}</strong></td>
-      <td style="text-align:center">${a.diasPlan}</td>
-      <td style="text-align:center;color:var(--teal);font-weight:600">${a.diasEjec}</td>
-      <td style="text-align:right">${fmt(a.montoEstimado)}</td>
-      <td style="text-align:right;font-weight:600">${fmt(a.montoReal)}</td>
-      <td>${badge}</td>
-      <td>${obsHTML}</td>
+      <td data-label="Actividad"><strong style="color:var(--accent)">${a.codigo}</strong></td>
+      <td data-label="Días Plan" style="text-align:center">${a.diasPlan}</td>
+      <td data-label="Días Ejec" style="text-align:center;color:var(--teal);font-weight:600">${a.diasEjec}</td>
+      <td data-label="Monto Estimado" style="text-align:right">${fmt(a.montoEstimado)}</td>
+      <td data-label="Monto Real" style="text-align:right;font-weight:600">${fmt(a.montoReal)}</td>
+      <td data-label="% Consumo">${badge}</td>
+      <td data-label="Observados">${obsHTML}</td>
     </tr>`;
   }).join('');
 

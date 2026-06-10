@@ -8,6 +8,8 @@
   <link rel="icon" type="image/webp" href="img/logo-isf.webp">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
+  <script src="js/config.js"></script>
+  <script src="js/pin-guard.js"></script>
 </head>
 <body>
 
@@ -189,7 +191,10 @@
 
     <!-- Equipo: Control presupuestal -->
     <div id="eq-proyecto" hidden>
-      <p style="text-align:center;color:var(--text-muted);padding:32px">Cargando…</p>
+      <div id="control-chips" style="padding:1rem 1rem 0.5rem"></div>
+      <div id="control-content">
+        <p style="text-align:center;color:var(--text-muted);padding:32px">Cargando…</p>
+      </div>
     </div>
 
   </div>

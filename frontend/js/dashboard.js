@@ -20,7 +20,7 @@ let equipoPlan = { planPorCodigo: {}, planTotal: 0 };
 
 let chartEquipoGlobal  = null;
 let chartEquipoMes     = null;
-let controlData        = null;
+let controlCache       = {};
 
 // ── Trimestres ────────────────────────────────────────────────────────────────
 // Q1 es especial: Dic 2025 + Ene/Feb/Mar 2026
@@ -40,6 +40,7 @@ function trimestreActual() {
 }
 
 let trimestreSeleccionado = 'Acumulado';
+let trimestreControl      = 'Acumulado';
 
 function renderTrimestresPersonal() {
   const container = document.getElementById('trimestre-chips');
@@ -55,6 +56,24 @@ function renderTrimestresPersonal() {
       renderTrimestresPersonal();
       const nombre = document.getElementById('dash-nombre').value;
       if (nombre) await cargarPersonal(nombre);
+    });
+    container.appendChild(chip);
+  });
+}
+
+function renderTrimestresControl() {
+  const container = document.getElementById('control-chips');
+  if (!container) return;
+  container.innerHTML = '';
+  ['Acumulado', ...Object.keys(TRIMESTRES)].forEach(q => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'mes-chip' + (q === trimestreControl ? ' active' : '');
+    chip.textContent = q;
+    chip.addEventListener('click', async () => {
+      trimestreControl = q;
+      renderTrimestresControl();
+      await cargarControl();
     });
     container.appendChild(chip);
   });
@@ -469,13 +488,16 @@ function renderEquipoMes() {
 // ── Equipo: distribución por sección (dona) ────────────────────────────────────
 
 async function cargarControl() {
-  const contenedor = document.getElementById('eq-proyecto');
-  if (controlData) { renderControl(controlData); return; }
+  renderTrimestresControl();
+  const contenedor = document.getElementById('control-content');
+  if (!contenedor) return;
+  if (controlCache[trimestreControl]) { renderControl(controlCache[trimestreControl]); return; }
   contenedor.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px">Cargando…</p>';
   try {
-    const res = await apiFetch(CONFIG.N8N_CONTROL);
+    const q   = trimestreControl !== 'Acumulado' ? `?trimestre=${trimestreControl}` : '';
+    const res = await apiFetch(CONFIG.N8N_CONTROL + q);
     const data = await res.json();
-    controlData = data;
+    controlCache[trimestreControl] = data;
     renderControl(data);
   } catch {
     contenedor.innerHTML = '<p style="text-align:center;color:#dc2626;padding:32px">Error al cargar datos</p>';
@@ -484,7 +506,8 @@ async function cargarControl() {
 
 function renderControl(data) {
   const { actividades } = data;
-  const contenedor = document.getElementById('eq-proyecto');
+  const contenedor = document.getElementById('control-content');
+  if (!contenedor) return;
   if (!actividades?.length) {
     contenedor.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px">Sin datos</p>';
     return;

@@ -5,6 +5,11 @@
 .env
 .env.local
 
+# Credenciales Google Service Account (nunca subir)
+*.json
+!package.json
+!package-lock.json
+
 # Config local con URLs reales (Docker usa config.template.js)
 frontend/js/config.js
 

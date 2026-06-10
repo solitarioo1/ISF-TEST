@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ISF Peru — Acceso</title>
+  <link rel="icon" type="image/avif" href="img/logo-isf.avif">
+  <link rel="icon" type="image/webp" href="img/logo-isf.webp">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="pin-screen">
+  <div class="pin-card">
+
+    <p class="pin-logo">ISF Café Seguro Perú · Timesheet</p>
+    <p class="pin-title">Código de acceso</p>
+    <p class="pin-subtitle">Ingresa el código de 5 dígitos</p>
+
+    <div id="pin-form-area">
+      <div class="pin-container">
+        <input class="pin-input" type="password" inputmode="numeric" maxlength="1" data-idx="0" autocomplete="new-password">
+        <input class="pin-input" type="password" inputmode="numeric" maxlength="1" data-idx="1" autocomplete="new-password">
+        <input class="pin-input" type="password" inputmode="numeric" maxlength="1" data-idx="2" autocomplete="new-password">
+        <input class="pin-input" type="password" inputmode="numeric" maxlength="1" data-idx="3" autocomplete="new-password">
+        <input class="pin-input" type="password" inputmode="numeric" maxlength="1" data-idx="4" autocomplete="new-password">
+      </div>
+      <p id="pin-error" class="pin-error"></p>
+      <p id="pin-attempts" class="pin-attempts"></p>
+    </div>
+
+    <div id="pin-blocked-area" hidden>
+      <div class="pin-blocked-box">
+        <p style="font-weight:500;color:#dc2626;margin-bottom:0.5rem">Acceso bloqueado</p>
+        <p style="font-size:13px;color:#78716c">Demasiados intentos fallidos. Intenta de nuevo en <strong id="pin-countdown"></strong>.</p>
+      </div>
+    </div>
+
+    <div id="pin-loading" class="pin-loading" hidden>Verificando…</div>
+
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/pin.js"></script>
+</body>
+</html>

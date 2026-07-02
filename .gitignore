@@ -44,5 +44,8 @@ Thumbs.db
 # Node (si se agrega en el futuro)
 node_modules/
 
+# Proxy local para testing (no va a producción)
+proxy-local.js
+
 #archivo xlsx
 Tabla de Horas.xlsx

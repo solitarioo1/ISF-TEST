@@ -4,7 +4,7 @@
 
   function redirect() {
     localStorage.setItem(RETURN_KEY, window.location.href);
-    window.location.replace('/pin');
+    window.location.replace(ROUTES.pin);
   }
 
   const data = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');

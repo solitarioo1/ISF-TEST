@@ -130,7 +130,7 @@
       if (data.valid) {
         sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ts: Date.now() }));
         localStorage.removeItem(ATTEMPTS_KEY);
-        const returnUrl = localStorage.getItem(RETURN_KEY) || '/asistencia';
+        const returnUrl = localStorage.getItem(RETURN_KEY) || ROUTES.asistencia;
         localStorage.removeItem(RETURN_KEY);
         window.location.replace(returnUrl);
       } else {

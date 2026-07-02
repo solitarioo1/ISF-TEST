@@ -16,7 +16,8 @@ let subtabActiva = 'eq-mes';
 // Conversión entre la tabla de horas (plan en HORAS) y el backup (ejecutado en DÍAS)
 const HORAS_POR_DIA = 1;
 
-let equipoPlan = { planPorCodigo: {}, planTotal: 0 };
+let equipoPlan  = { planPorCodigo: {}, planTotal: 0 };
+let memberRates = {};
 
 let chartEquipoGlobal  = null;
 let chartEquipoMes     = null;
@@ -41,6 +42,7 @@ function trimestreActual() {
 
 let trimestreSeleccionado = 'Acumulado';
 let trimestreControl      = 'Acumulado';
+let grupoFiltro           = 'Todos';
 
 function renderTrimestresPersonal() {
   const container = document.getElementById('trimestre-chips');
@@ -72,6 +74,7 @@ function renderTrimestresControl() {
     chip.textContent = q;
     chip.addEventListener('click', async () => {
       trimestreControl = q;
+      grupoFiltro = 'Todos';
       renderTrimestresControl();
       await cargarControl();
     });
@@ -85,7 +88,7 @@ async function init() {
   poblarMeses();
   renderTrimestresPersonal();
   setConexion('loading', 'Cargando datos…');
-  await Promise.all([cargarMiembros(), cargarBackupCompleto(), cargarEquipoPlan()]);
+  await Promise.all([cargarMiembros(), cargarBackupCompleto(), cargarEquipoPlan(), cargarTasas()]);
   if (miembros.length > 0) {
     setConexion('ok', 'Conectado · Google Drive listo');
   } else {
@@ -108,6 +111,19 @@ function setConexion(estado, texto) {
   }
 }
 
+// ── Tasas por miembro (desde webhook control) ─────────────────────────────────
+
+async function cargarTasas() {
+  try {
+    const res  = await apiFetch(CONFIG.N8N_CONTROL);
+    const data = await res.json();
+    (data.miembros || []).forEach(m => {
+      memberRates[m.nombre.trim().toLowerCase()] = m.rate;
+    });
+    controlCache['Acumulado'] = data;
+  } catch (e) { console.warn('Error tasas:', e.message); }
+}
+
 // ── Plan total del equipo (desde webhook dashboard) ────────────────────────────
 
 async function cargarEquipoPlan() {
@@ -122,15 +138,23 @@ async function cargarEquipoPlan() {
 // ── Meses selector ───────────────────────────────────────────────────────────
 
 function poblarMeses() {
-  const trimestreInicio = Math.floor(mesActual / 3) * 3;
+  const cierreQ2 = new Date(CONFIG.Q2_CIERRE);
+  const esJulioTemprano = now < cierreQ2 && mesActual === 6;
+  const mesParaQ = esJulioTemprano ? 5 : mesActual;
+  const trimestreInicio = Math.floor(mesParaQ / 3) * 3;
   const anio = now.getFullYear();
+
+  const mesesAMostrar = esJulioTemprano
+    ? [3, 4, 5, 6]
+    : [trimestreInicio, trimestreInicio + 1, trimestreInicio + 2];
 
   ['sel-mes', 'sel-mes-equipo'].forEach(id => {
     const sel = document.getElementById(id);
     if (!sel) return;
-    for (let m = trimestreInicio; m <= trimestreInicio + 2; m++) {
-      sel.add(new Option(`${MESES[m]} ${anio}`, `${MESES[m]}-${anio}`));
-    }
+    mesesAMostrar.forEach(m => {
+      const a = m === 11 && mesActual === 0 ? anio - 1 : anio;
+      sel.add(new Option(`${MESES[m]} ${a}`, `${MESES[m]}-${a}`));
+    });
     sel.value = `${MESES[mesActual]}-${anio}`;
   });
 
@@ -153,11 +177,15 @@ async function cargarMiembros() {
     m.forEach(n => sel.add(new Option(n, n)));
     document.getElementById('equipo-badge').textContent = `${m.length} miembros`;
 
-    // Construir mapa código → label ES desde categorias (fuente completa)
+    // Construir mapa código → label ES y sección → nombre real
     (categorias || []).forEach(cat => {
       (cat.actividades || []).forEach(a => {
         const codigo = a.label.match(/^(\d+-\d+)/)?.[1];
-        if (codigo) labelES[codigo] = a.label.replace(/^\d+-\d+\.\s*/, '');
+        if (codigo) {
+          labelES[codigo] = a.label.replace(/^\d+-\d+\.\s*/, '');
+          const sec = codigo.split('-')[0];
+          if (!SEC_LABEL[sec]) SEC_LABEL[sec] = cat.nombre;
+        }
       });
     });
   } catch (e) { console.warn('Error miembros:', e.message); }
@@ -240,6 +268,10 @@ function renderPersonal(data) {
   document.getElementById('stat-rest').textContent = Math.max(totalRestante, 0);
   document.getElementById('stat-pct').textContent  = `${pct}%`;
   document.getElementById('dash-badge').textContent = data.nombre;
+  const rate  = memberRates[(data.nombre || '').trim().toLowerCase()] || 0;
+  const monto = Math.round(totalEjecutado * rate * 100) / 100;
+  const fmtM  = n => n > 0 ? '€' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+  document.getElementById('stat-monto').textContent = fmtM(monto);
 
   const fill = document.getElementById('progress-fill');
   fill.style.width = `${Math.min(pct, 100)}%`;
@@ -247,7 +279,7 @@ function renderPersonal(data) {
 
   const tbody = document.getElementById('horas-body');
   if (!actividades?.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Sin actividades planificadas</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Sin actividades planificadas</td></tr>';
     return;
   }
 
@@ -293,6 +325,7 @@ function renderPersonal(data) {
       </td>
       <td data-label="Días Asignados" style="font-weight:600;color:#e0552f">${a.planificado}</td>
       <td data-label="Días Trabajados" style="font-weight:600;color:#008c7a">${a.ejecutado}</td>
+      <td data-label="Acumulado" style="font-weight:600;color:#8B5CF6">${a.ejecutadoTotal || 0}</td>
       <td data-label="Días Pendientes">${rest}</td>
       <td data-label="% Completado">${badge}</td>
     </tr>`;
@@ -313,10 +346,14 @@ function renderMensual(nombre) {
 
   const dias  = registros.reduce((s, r) => s + (parseFloat(r[13]) || 0), 0);
   const codes = new Set(registros.map(r => r[11]).filter(Boolean));
+  const rate  = memberRates[nombre.trim().toLowerCase()] || 0;
+  const monto = Math.round(dias * rate * 100) / 100;
+  const fmt   = n => n > 0 ? '€' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
 
-  document.getElementById('mensual-dias').textContent  = dias;
-  document.getElementById('mensual-acts').textContent  = codes.size;
-  document.getElementById('mensual-label').textContent = `${mes} ${anio}`;
+  document.getElementById('mensual-dias').textContent   = dias || '—';
+  document.getElementById('mensual-label').textContent  = `${mes} ${anio}`;
+  document.getElementById('mensual-rate').textContent   = fmt(rate);
+  document.getElementById('mensual-monto').textContent  = fmt(monto);
 
   const tbody = document.getElementById('mensual-body');
   if (!registros.length) {
@@ -405,11 +442,7 @@ function renderEquipoResumen() {
 // ── Equipo: matriz de participación por mes ────────────────────────────────────
 
 const SECCIONES = ['1','2','3','4','5','6','7','8','9'];
-const SEC_LABEL = {
-  '1':'Distribución','2':'Modelo Climático','3':'Capacitación',
-  '4':'Tecnología','5':'Suscripción','6':'Pagos',
-  '7':'Reportes','8':'ISF Support','9':'Sostenibilidad'
-};
+const SEC_LABEL = {};
 
 function renderEquipoMes() {
   const selVal = document.getElementById('sel-mes-equipo')?.value;
@@ -491,21 +524,44 @@ async function cargarControl() {
   renderTrimestresControl();
   const contenedor = document.getElementById('control-content');
   if (!contenedor) return;
-  if (controlCache[trimestreControl]) { renderControl(controlCache[trimestreControl]); return; }
+  if (controlCache[trimestreControl]) { renderGrupoChips(controlCache[trimestreControl].actividades || []); renderControl(controlCache[trimestreControl]); return; }
   contenedor.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px">Cargando…</p>';
   try {
     const q   = trimestreControl !== 'Acumulado' ? `?trimestre=${trimestreControl}` : '';
     const res = await apiFetch(CONFIG.N8N_CONTROL + q);
     const data = await res.json();
     controlCache[trimestreControl] = data;
+    renderGrupoChips(data.actividades || []);
     renderControl(data);
   } catch {
     contenedor.innerHTML = '<p style="text-align:center;color:#dc2626;padding:32px">Error al cargar datos</p>';
   }
 }
 
+function renderGrupoChips(actividades) {
+  const container = document.getElementById('grupo-chips');
+  if (!container) return;
+  const grupos = ['Todos', ...new Set(actividades.map(a => a.codigo.split('-')[0]).sort())];
+  container.innerHTML = '';
+  grupos.forEach(g => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'mes-chip' + (g === grupoFiltro ? ' active' : '');
+    chip.textContent = g === 'Todos' ? 'Todos' : `${g} · ${SEC_LABEL[g] || g}`;
+    chip.addEventListener('click', () => {
+      grupoFiltro = g;
+      renderGrupoChips(actividades);
+      renderControl({ actividades });
+    });
+    container.appendChild(chip);
+  });
+}
+
 function renderControl(data) {
-  const { actividades } = data;
+  const { actividades: todasActs } = data;
+  const actividades = grupoFiltro === 'Todos'
+    ? todasActs
+    : todasActs.filter(a => a.codigo.split('-')[0] === grupoFiltro);
   const contenedor = document.getElementById('control-content');
   if (!contenedor) return;
   if (!actividades?.length) {
@@ -565,6 +621,15 @@ function renderControl(data) {
             </tr>
           </thead>
           <tbody id="control-body">${filas}</tbody>
+          <tfoot>
+            <tr style="font-weight:700;font-size:15px;background:var(--accent-light);border-top:2px solid var(--border)">
+              <td style="padding:12px 8px">Total</td>
+              <td style="text-align:center;padding:12px 8px">${actividades.reduce((s,a)=>s+a.diasPlan,0).toFixed(1)}</td>
+              <td style="text-align:center;color:var(--teal);padding:12px 8px">${actividades.reduce((s,a)=>s+a.diasEjec,0).toFixed(1)}</td>
+              ${(()=>{const me=actividades.reduce((s,a)=>s+a.montoEstimado,0),mr=actividades.reduce((s,a)=>s+a.montoReal,0),excede=mr>me;return`<td style="text-align:right;font-size:16px;padding:12px 8px">${fmt(me)}</td><td style="text-align:right;font-size:16px;font-weight:800;color:${excede?'#dc2626':'var(--accent)'};padding:12px 8px">${fmt(mr)}</td>`})()}
+              <td></td><td></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>`;

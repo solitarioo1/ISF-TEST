@@ -18,8 +18,8 @@
     ISF Café Seguro Perú· Timesheet 
   </a>
   <nav>
-    <a href="/asistencia">Registro</a>
-    <a href="/horas" class="active">Mis horas</a>
+    <a href="javascript:void(0)" onclick="location.href=ROUTES.asistencia">Registro</a>
+    <a href="javascript:void(0)" onclick="location.href=ROUTES.horas" class="active">Mis horas</a>
   </nav>
 </header>
 
@@ -42,7 +42,7 @@
   <!-- TAB: Mi progreso -->
   <div id="tab-personal" class="dash-section" hidden>
     <div id="trimestre-chips" class="mes-chips" style="margin-bottom:16px"></div>
-    <div class="stat-row">
+    <div class="stat-row stat-row-5">
       <div class="stat-card">
         <div class="stat-label">Días Asignados</div>
         <div class="stat-value" id="stat-plan">—</div>
@@ -58,6 +58,10 @@
       <div class="stat-card">
         <div class="stat-label">% Completado</div>
         <div class="stat-value" id="stat-pct">—</div>
+      </div>
+      <div class="stat-card teal-card">
+        <div class="stat-label">Monto consumido</div>
+        <div class="stat-value teal" id="stat-monto">—</div>
       </div>
     </div>
 
@@ -79,12 +83,13 @@
               <th>Actividad</th>
               <th style="color:var(--accent)">Días Asignados</th>
               <th style="color:#00C9B1">Días Trabajados</th>
+              <th style="color:#8B5CF6">Días Acumulados</th>
               <th>Días Pendientes</th>
               <th>% Completado</th>
             </tr>
           </thead>
           <tbody id="horas-body">
-            <tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Selecciona un miembro</td></tr>
+            <tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Selecciona un miembro</td></tr>
           </tbody>
         </table>
       </div>
@@ -99,18 +104,22 @@
       <select id="sel-mes"></select>
     </div>
 
-    <div class="stat-row stat-row-3">
+    <div class="stat-row">
       <div class="stat-card">
-        <div class="stat-label">Días registrados</div>
+        <div class="stat-label">Días trabajados</div>
         <div class="stat-value accent" id="mensual-dias">—</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Actividades distintas</div>
-        <div class="stat-value" id="mensual-acts">—</div>
+        <div class="stat-label">Mes</div>
+        <div class="stat-value" id="mensual-label" style="font-size:16px">—</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Mes seleccionado</div>
-        <div class="stat-value" id="mensual-label" style="font-size:16px">—</div>
+        <div class="stat-label">Tarifa / día</div>
+        <div class="stat-value" id="mensual-rate">—</div>
+      </div>
+      <div class="stat-card teal-card">
+        <div class="stat-label">Monto consumido</div>
+        <div class="stat-value teal" id="mensual-monto">—</div>
       </div>
     </div>
 
@@ -192,6 +201,7 @@
     <!-- Equipo: Control presupuestal -->
     <div id="eq-proyecto" hidden>
       <div id="control-chips" style="padding:1rem 1rem 0.5rem"></div>
+      <div id="grupo-chips" style="padding:0 1rem 0.5rem"></div>
       <div id="control-content">
         <p style="text-align:center;color:var(--text-muted);padding:32px">Cargando…</p>
       </div>
@@ -208,7 +218,6 @@
 
 <div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="js/config.js"></script>
 <script src="js/dashboard.js"></script>
 </body>
 </html>

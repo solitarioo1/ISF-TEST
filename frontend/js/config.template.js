@@ -12,6 +12,7 @@ const CONFIG = {
   API_KEY:         '${API_KEY}',
   PIN_BLOCK_MINUTES: ${PIN_BLOCK_MINUTES},
   PIN_SESSION_HOURS: ${PIN_SESSION_HOURS},
+  Q2_CIERRE: '${Q2_CIERRE}',
 
   PROYECTO: 'ISF Peru',
   MESES: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],

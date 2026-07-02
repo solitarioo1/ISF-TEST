@@ -3,21 +3,91 @@
 const now = new Date();
 const MESES_LARGO = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                      'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const NB = ' ';
+const DIAS_SEMANA = [
+  'Domingo' + NB+NB,
+  'Lunes'   + NB+NB+NB+NB,
+  'Martes'  + NB+NB+NB,
+  'Miércoles',
+  'Jueves'  + NB+NB+NB,
+  'Viernes' + NB+NB,
+  'Sábado'  + NB+NB+NB,
+];
+function padDia(s, n) { return s + ' '.repeat(n); }
+const DIAS_SEMANA2 = [
+  padDia('Domingo',  2),
+  padDia('Lunes',    4),
+  padDia('Martes',   3),
+  'Miércoles',
+  padDia('Jueves',   3),
+  padDia('Viernes',  2),
+  padDia('Sábado',   3),
+];
 const selDia = document.getElementById('dia');
 
+function easterDate(year) {
+  const a = year % 19, b = Math.floor(year / 100), c = year % 100;
+  const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4), k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+  const day   = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month, day);
+}
+
+function getFeriadosPerú(year) {
+  const easter = easterDate(year);
+  const juevesSanto = new Date(easter); juevesSanto.setDate(easter.getDate() - 3);
+  const viernesSanto = new Date(easter); viernesSanto.setDate(easter.getDate() - 2);
+  const fijos = [
+    [0,  1,  'Año Nuevo'],
+    [4,  1,  'Día del Trabajo'],
+    [5,  7,  'Batalla de Arica'],
+    [5, 29,  'San Pedro y San Pablo'],
+    [6, 28,  'Independencia del Perú'],
+    [6, 29,  'Gran Parada Militar'],
+    [7, 30,  'Santa Rosa de Lima'],
+    [9,  8,  'Combate de Angamos'],
+    [10, 1,  'Todos los Santos'],
+    [11, 8,  'Inmaculada Concepción'],
+    [11,25,  'Navidad'],
+  ];
+  const set = new Map();
+  fijos.forEach(([m, d, nombre]) => set.set(`${year}-${m}-${d}`, nombre));
+  set.set(`${year}-${juevesSanto.getMonth()}-${juevesSanto.getDate()}`, 'Jueves Santo');
+  set.set(`${year}-${viernesSanto.getMonth()}-${viernesSanto.getDate()}`, 'Viernes Santo');
+  return set;
+}
+
+const FERIADOS = getFeriadosPerú(now.getFullYear());
+
 // Trimestre actual (0-based): Q1=0,1,2 Q2=3,4,5 Q3=6,7,8 Q4=9,10,11
+// Transición Q2→Q3 se retrasa hasta el 30 de julio para cierre de datos
 const mesActual = now.getMonth();
-const trimestreInicio = Math.floor(mesActual / 3) * 3;
-const mesesQ = [trimestreInicio, trimestreInicio + 1, trimestreInicio + 2];
+const cierreQ2 = new Date(CONFIG.Q2_CIERRE);
+const esJulioTemprano = now < cierreQ2 && now.getMonth() === 6;
+const trimestreInicio = Math.floor((esJulioTemprano ? 5 : mesActual) / 3) * 3;
+const mesesQ = esJulioTemprano
+  ? [3, 4, 5, 6]  // Abr, May, Jun + Jul durante transición
+  : [trimestreInicio, trimestreInicio + 1, trimestreInicio + 2];
 
 let mesSeleccionado = mesActual;
 
 function poblarDias(mes) {
   selDia.innerHTML = '<option value="">Selecciona el día</option>';
-  const total = new Date(now.getFullYear(), mes + 1, 0).getDate();
+  const year  = now.getFullYear();
+  const total = new Date(year, mes + 1, 0).getDate();
   const esHoy = mes === mesActual;
   for (let d = 1; d <= total; d++) {
-    const o = new Option(`${d} de ${MESES_LARGO[mes]}`, d);
+    const fecha    = new Date(year, mes, d);
+    const diaSem   = fecha.getDay();
+    const esFinde  = diaSem === 0 || diaSem === 6;
+    const feriado  = FERIADOS.get(`${year}-${mes}-${d}`);
+    const label = `${DIAS_SEMANA2[diaSem]}  ${d} de ${MESES_LARGO[mes]}`;
+    const o = new Option(label, d);
+    if (esFinde || feriado) { o.disabled = true; o.style.color = '#ccc'; }
     if (esHoy && d === now.getDate()) o.selected = true;
     selDia.add(o);
   }
@@ -61,14 +131,24 @@ async function checkDias() {
 }
 
 function marcarDias() {
+  const year = now.getFullYear();
   Array.from(selDia.options).forEach(o => {
     const d = parseInt(o.value);
+    if (!d) return;
+    const fecha   = new Date(year, mesSeleccionado, d);
+    const esFinde = fecha.getDay() === 0 || fecha.getDay() === 6;
+    const feriado = FERIADOS.get(`${year}-${mesSeleccionado}-${d}`);
     if (diasRegistrados.includes(d)) {
       o.disabled = true;
-      o.text = o.text.includes('✓') ? o.text : `✓ ${o.text} — ya registrado`;
+      o.text = o.text.includes('✓') ? o.text : `✓ ${o.text}`;
+      o.style.color = '#16a34a';
+    } else if (esFinde || feriado) {
+      o.disabled = true;
+      o.style.color = '#bbb';
     } else {
       o.disabled = false;
-      o.text = o.text.replace(' — ya registrado', '').replace('✓ ', '');
+      o.text = o.text.replace('✓ ', '');
+      o.style.color = '';
     }
   });
 }
@@ -77,7 +157,19 @@ function marcarDias() {
 
 let categoriasData = [];
 let categoriaActual = null;
-let codigosAsignados = null; // null = sin filtro, [] = sin asignaciones
+let codigosAsignados = null;
+let personalData     = {};  // codigo → { plan, exec }
+
+async function cargarPersonalData(nombre) {
+  try {
+    const res  = await apiFetch(`${CONFIG.N8N_DASHBOARD}?nombre=${encodeURIComponent(nombre)}`);
+    const data = await res.json();
+    personalData = {};
+    (data.actividades || []).forEach(a => {
+      personalData[a.codigo] = { plan: a.planificado, exec: a.ejecutado };
+    });
+  } catch { personalData = {}; }
+}
 
 async function cargarActividadesAsignadas(nombre) {
   try {
@@ -113,7 +205,7 @@ async function cargarDatos() {
     document.getElementById('nombre').addEventListener('change', async () => {
       const nombre = document.getElementById('nombre').value;
       codigosAsignados = null;
-      if (nombre) await cargarActividadesAsignadas(nombre);
+      if (nombre) await Promise.all([cargarActividadesAsignadas(nombre), cargarPersonalData(nombre)]);
       checkDias();
     });
   } catch (e) {
@@ -164,7 +256,22 @@ function renderActividades(items) {
   const filtradas = items.filter(a => a.label.toLowerCase().includes(q));
   filtradas.forEach(a => {
     const li = document.createElement('li');
-    li.textContent = a.label;
+    const codigo = a.label.match(/^(\d+-\d+)/)?.[1] || '';
+    const d = personalData[codigo];
+    let barraHTML = '';
+    if (d && d.plan > 0) {
+      const pct   = Math.min(Math.round((d.exec / d.plan) * 100), 100);
+      const color = pct >= 100 ? '#dc2626' : pct >= 80 ? '#f59e0b' : '#00C9B1';
+      barraHTML = `<div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+        <div style="flex:1;height:4px;background:#e5e7eb;border-radius:4px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${color};border-radius:4px"></div>
+        </div>
+        <span style="font-size:10px;font-family:var(--mono);color:${color};white-space:nowrap">${d.exec}/${d.plan} · ${pct}%</span>
+      </div>`;
+    }
+    li.innerHTML = `<span>${a.label}</span>${barraHTML}`;
+    li.style.display = 'flex';
+    li.style.flexDirection = 'column';
     if (a.value === hiddenActividad.value) li.classList.add('selected');
     li.addEventListener('click', () => selectActividad(a));
     pickerList.appendChild(li);
@@ -179,6 +286,22 @@ const CAT_IN = {
 
 let actividadMeta = {};
 
+function mostrarProgresoActividad(codigo) {
+  const el = document.getElementById('actividad-progreso');
+  const d  = personalData[codigo];
+  if (!d || d.plan === 0) { el.hidden = true; return; }
+  const pct   = Math.min(Math.round((d.exec / d.plan) * 100), 100);
+  const color = pct >= 100 ? '#dc2626' : pct >= 80 ? '#f59e0b' : '#00C9B1';
+  el.hidden = false;
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted)">
+      <div style="flex:1;height:6px;background:#e5e7eb;border-radius:4px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:4px;transition:width 0.3s"></div>
+      </div>
+      <span style="white-space:nowrap;font-family:var(--mono);color:${color};font-weight:600">${d.exec} / ${d.plan} días · ${pct}%</span>
+    </div>`;
+}
+
 function selectActividad(item) {
   hiddenActividad.value = item.value;
   triggerLabel.textContent = `${categoriaActual.nombre} · ${item.label}`;
@@ -186,6 +309,7 @@ function selectActividad(item) {
   trigger.style.borderColor = '';
 
   const codigo = item.label.match(/^(\d+-\d+)/)?.[1] || '';
+  mostrarProgresoActividad(codigo);
   const catNum = codigo.split('-')[0];
   actividadMeta = {
     actividad_IN:  item.value,
@@ -264,6 +388,7 @@ btnConfirm.addEventListener('click', async () => {
     triggerLabel.textContent = 'Selecciona la actividad';
     trigger.classList.remove('filled');
     actividadMeta = {};
+    document.getElementById('actividad-progreso').hidden = true;
     setStatus('ok', 'Conectado · Google Drive listo');
     await checkDias();
   } catch {

@@ -138,6 +138,9 @@ select {
 
 select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(249,112,72,0.12); }
 
+#dia { font-family: var(--mono); font-size: 13px; }
+#dia option:disabled { color: #bbb; }
+
 hr { border: none; border-top: 1px solid var(--border); }
 
 .fixed-row {
@@ -283,7 +286,7 @@ button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .dash-top {
   width: 100%;
-  max-width: 960px;
+  max-width: 1200px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -309,7 +312,7 @@ button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
 .dash-tab:hover { border-color: var(--accent); color: var(--accent); }
 .dash-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-.dash-section { width: 100%; max-width: 960px; display: flex; flex-direction: column; gap: 16px; }
+.dash-section { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 16px; }
 .dash-section .card { max-width: 100%; }
 
 .stat-row {
@@ -319,6 +322,7 @@ button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 .stat-row-3 { grid-template-columns: repeat(3, 1fr); }
+.stat-row-5 { grid-template-columns: repeat(5, 1fr); }
 
 .stat-card {
   background: var(--surface);

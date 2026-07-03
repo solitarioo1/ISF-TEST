@@ -22,6 +22,7 @@ excels/
 # Archivos de texto locales (datos / notas)
 *.txt
 *.tsv
+lista.txt
 
 # Scripts utilitarios locales
 scripts/

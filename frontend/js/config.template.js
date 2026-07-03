@@ -1,3 +1,9 @@
+const ROUTES = {
+  pin:        '/pin',
+  asistencia: '/asistencia',
+  horas:      '/horas',
+};
+
 const CONFIG = {
   N8N_SUBMIT:      '${N8N_SUBMIT}',
   N8N_REFDATA:     '${N8N_REFDATA}',

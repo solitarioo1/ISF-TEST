@@ -1130,8 +1130,15 @@ tr:last-child td { border-bottom: none; }
   .eq-stat-num { font-size: 24px; }
   .equipo-donut { width: 140px; height: 140px; }
 
-  /* Toast arriba para no tapar conn-status */
-  #toast { bottom: auto; top: 60px; right: 12px; left: 12px; text-align: center; }
+  /* Toast centrado en pantalla */
+  #toast {
+    bottom: auto; top: 50%; left: 50%;
+    transform: translateX(-50%) translateY(calc(-50% + 8px));
+    right: auto;
+    width: max-content; max-width: calc(100vw - 32px);
+    text-align: center;
+  }
+  #toast.show { transform: translateX(-50%) translateY(-50%); }
 
   .conn-status { bottom: 8px; right: 8px; left: 8px; font-size: 11px; padding: 6px 12px; }
 

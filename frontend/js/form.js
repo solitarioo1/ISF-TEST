@@ -23,7 +23,13 @@ const DIAS_SEMANA2 = [
   padDia('Viernes',  2),
   padDia('Sábado',   3),
 ];
-const selDia = document.getElementById('dia');
+const selDia        = document.getElementById('dia');
+const diaTrigger    = document.getElementById('dia-trigger');
+const diaLabel      = document.getElementById('dia-label');
+const diaOverlay    = document.getElementById('dia-overlay');
+const diaList       = document.getElementById('dia-list');
+const diaClose      = document.getElementById('dia-close');
+let   diaOpciones   = []; // { value, text, disabled, registrado }
 
 function easterDate(year) {
   const a = year % 19, b = Math.floor(year / 100), c = year % 100;
@@ -76,22 +82,86 @@ const mesesQ = esJulioTemprano
 let mesSeleccionado = mesActual;
 
 function poblarDias(mes) {
-  selDia.innerHTML = '<option value="">Selecciona el día</option>';
   const year  = now.getFullYear();
   const total = new Date(year, mes + 1, 0).getDate();
-  const esHoy = mes === mesActual;
+  diaOpciones = [];
   for (let d = 1; d <= total; d++) {
-    const fecha    = new Date(year, mes, d);
-    const diaSem   = fecha.getDay();
-    const esFinde  = diaSem === 0 || diaSem === 6;
-    const feriado  = FERIADOS.get(`${year}-${mes}-${d}`);
-    const label = `${DIAS_SEMANA2[diaSem]}  ${d} de ${MESES_LARGO[mes]}`;
-    const o = new Option(label, d);
-    if (esFinde || feriado) { o.disabled = true; o.style.color = '#ccc'; }
-    if (esHoy && d === now.getDate()) o.selected = true;
-    selDia.add(o);
+    const fecha   = new Date(year, mes, d);
+    const diaSem  = fecha.getDay();
+    const esFinde = diaSem === 0 || diaSem === 6;
+    const feriado = FERIADOS.get(`${year}-${mes}-${d}`);
+    diaOpciones.push({
+      value: d,
+      text: `${DIAS_SEMANA2[diaSem]}  ${d} de ${MESES_LARGO[mes]}`,
+      disabled: !!(esFinde || feriado),
+      registrado: false,
+    });
   }
+  // Reset selección
+  selDia.value = '';
+  diaLabel.textContent = 'Selecciona el día';
+  diaTrigger.classList.remove('filled');
+  renderDiaList();
 }
+
+function renderDiaList() {
+  diaList.innerHTML = '';
+  diaOpciones.forEach(op => {
+    const li = document.createElement('li');
+    li.style.cssText = `font-family:var(--mono);font-size:13px;display:flex;justify-content:space-between;align-items:center;`;
+    if (op.disabled) {
+      li.style.color = '#bbb';
+      li.style.cursor = 'default';
+      li.style.pointerEvents = 'none';
+    } else if (op.registrado) {
+      li.style.color = '#16a34a';
+      li.style.fontWeight = '600';
+    }
+    if (String(op.value) === String(selDia.value)) li.classList.add('selected');
+    if (op.registrado) {
+      li.innerHTML = `<span>${op.text}</span>
+        <button type="button" data-dia="${op.value}" data-texto="${op.text.trim()}" style="font-size:11px;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;padding:2px 10px;border-radius:4px;cursor:pointer;font-family:var(--sans);white-space:nowrap">
+          🗑 Eliminar
+        </button>`;
+      li.querySelector('button').addEventListener('click', e => {
+        e.stopPropagation();
+        selDia.value = op.value;
+        diaLabel.textContent = op.text.trim();
+        closeDiaPicker();
+        openModalEliminar();
+      });
+    } else {
+      li.innerHTML = `<span>${op.text}</span>`;
+    }
+    if (!op.disabled && !op.registrado) {
+      li.addEventListener('click', () => {
+        selDia.value = op.value;
+        diaLabel.textContent = op.text.trim();
+        diaTrigger.classList.add('filled');
+        diaTrigger.style.borderColor = '';
+        closeDiaPicker();
+        actualizarBtnEliminar();
+      });
+    }
+    diaList.appendChild(li);
+  });
+}
+
+function openDiaPicker() {
+  diaOverlay.hidden = false;
+  // Scroll al día seleccionado o al día de hoy
+  setTimeout(() => {
+    const selected = diaList.querySelector('.selected') || diaList.querySelector('li:not([style*="pointer-events"])');
+    if (selected) selected.scrollIntoView({ block: 'center' });
+  }, 50);
+}
+
+function closeDiaPicker() { diaOverlay.hidden = true; }
+
+diaTrigger.addEventListener('click', openDiaPicker);
+diaTrigger.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDiaPicker(); } });
+diaClose.addEventListener('click', closeDiaPicker);
+diaOverlay.addEventListener('click', e => { if (e.target === diaOverlay) closeDiaPicker(); });
 
 function renderChips() {
   const container = document.getElementById('mes-chips');
@@ -131,26 +201,17 @@ async function checkDias() {
 }
 
 function marcarDias() {
-  const year = now.getFullYear();
-  Array.from(selDia.options).forEach(o => {
-    const d = parseInt(o.value);
-    if (!d) return;
-    const fecha   = new Date(year, mesSeleccionado, d);
-    const esFinde = fecha.getDay() === 0 || fecha.getDay() === 6;
-    const feriado = FERIADOS.get(`${year}-${mesSeleccionado}-${d}`);
-    if (diasRegistrados.includes(d)) {
-      o.disabled = true;
-      o.text = o.text.includes('✓') ? o.text : `✓ ${o.text}`;
-      o.style.color = '#16a34a';
-    } else if (esFinde || feriado) {
-      o.disabled = true;
-      o.style.color = '#bbb';
-    } else {
-      o.disabled = false;
-      o.text = o.text.replace('✓ ', '');
-      o.style.color = '';
-    }
+  diaOpciones.forEach(op => {
+    op.registrado = diasRegistrados.includes(op.value);
   });
+  renderDiaList();
+  actualizarBtnEliminar();
+}
+
+function actualizarBtnEliminar() {
+  const dia = parseInt(selDia.value);
+  const esDiaRegistrado = dia && diasRegistrados.includes(dia);
+  document.getElementById('eliminar-registro').hidden = !esDiaRegistrado;
 }
 
 // ── Carga de datos desde n8n ────────────────────────────────────────────────
@@ -205,7 +266,17 @@ async function cargarDatos() {
     document.getElementById('nombre').addEventListener('change', async () => {
       const nombre = document.getElementById('nombre').value;
       codigosAsignados = null;
+      // Bloquear picker hasta que carguen los datos
+      trigger.style.pointerEvents = 'none';
+      trigger.style.opacity = '0.5';
+      triggerLabel.textContent = 'Cargando actividades...';
       if (nombre) await Promise.all([cargarActividadesAsignadas(nombre), cargarPersonalData(nombre)]);
+      trigger.style.pointerEvents = '';
+      trigger.style.opacity = '';
+      triggerLabel.textContent = 'Selecciona la actividad';
+      trigger.classList.remove('filled');
+      hiddenActividad.value = '';
+      actividadMeta = {};
       checkDias();
     });
   } catch (e) {
@@ -352,7 +423,7 @@ const LUGAR_ES = { 'Remote': 'Virtual', 'Field': 'Presencial' };
 function showModal(payload) {
   pendingPayload = payload;
   document.getElementById('conf-nombre').textContent    = payload.nombre;
-  document.getElementById('conf-dia').textContent       = selDia.options[selDia.selectedIndex].text;
+  document.getElementById('conf-dia').textContent       = diaLabel.textContent.trim();
   document.getElementById('conf-tiempo').textContent    =
     payload.days_worked === '0.5' ? '0.5 — Medio día' : '1 — Día completo';
   document.getElementById('conf-lugar').textContent     = LUGAR_ES[payload.lugar] || payload.lugar;
@@ -389,6 +460,10 @@ btnConfirm.addEventListener('click', async () => {
     trigger.classList.remove('filled');
     actividadMeta = {};
     document.getElementById('actividad-progreso').hidden = true;
+    selDia.value = '';
+    diaLabel.textContent = 'Selecciona el día';
+    diaTrigger.classList.remove('filled');
+    document.getElementById('eliminar-registro').hidden = true;
     setStatus('ok', 'Conectado · Google Drive listo');
     await checkDias();
   } catch {
@@ -405,7 +480,7 @@ btnConfirm.addEventListener('click', async () => {
 document.getElementById('form-registro').addEventListener('submit', e => {
   e.preventDefault();
 
-  const campos = ['nombre', 'dia', 'days_worked', 'lugar'];
+  const campos = ['nombre', 'days_worked', 'lugar'];
   const payload = {};
   let valido = true;
 
@@ -415,6 +490,13 @@ document.getElementById('form-registro').addEventListener('submit', e => {
     el.style.borderColor = el.value ? '' : '#ef4444';
     if (!el.value) valido = false;
   });
+
+  // Día (custom picker)
+  payload.dia = selDia.value;
+  if (!payload.dia) {
+    diaTrigger.style.borderColor = '#ef4444';
+    valido = false;
+  }
 
   // Actividad
   payload.actividad = hiddenActividad.value;
@@ -438,10 +520,73 @@ document.getElementById('form-registro').addEventListener('submit', e => {
   showModal(payload);
 });
 
-// Limpiar borde rojo al cambiar el select
+// Limpiar borde rojo al cambiar selects y triggers
 document.querySelectorAll('select').forEach(s =>
   s.addEventListener('change', () => s.style.borderColor = '')
 );
+diaTrigger.addEventListener('click', () => diaTrigger.style.borderColor = '');
+
+// Mostrar/ocultar botón eliminar al cambiar día
+selDia.addEventListener('change', actualizarBtnEliminar);
+
+// ── Eliminar registro ───────────────────────────────────────────────────────
+
+// ── Modal eliminar ──────────────────────────────────────────────────────────
+
+const modalEliminar    = document.getElementById('modal-eliminar');
+const btnElimCancelar  = document.getElementById('btn-elim-cancelar');
+const btnElimConfirmar = document.getElementById('btn-elim-confirmar');
+
+function openModalEliminar() {
+  const nombre = document.getElementById('nombre').value;
+  const dia    = parseInt(selDia.value);
+  const mes    = CONFIG.MESES[mesSeleccionado];
+  if (!nombre || !dia) return;
+  document.getElementById('elim-nombre').textContent = nombre;
+  document.getElementById('elim-dia').textContent    = diaLabel.textContent.trim();
+  document.getElementById('elim-mes').textContent    = `${mes} ${now.getFullYear()}`;
+  modalEliminar.hidden = false;
+}
+
+function closeModalEliminar() { modalEliminar.hidden = true; }
+
+document.getElementById('btn-eliminar').addEventListener('click', openModalEliminar);
+btnElimCancelar.addEventListener('click', closeModalEliminar);
+modalEliminar.addEventListener('click', e => { if (e.target === modalEliminar) closeModalEliminar(); });
+
+btnElimConfirmar.addEventListener('click', async () => {
+  const nombre = document.getElementById('nombre').value;
+  const dia    = parseInt(selDia.value);
+  const mes    = CONFIG.MESES[mesSeleccionado];
+  const anio   = now.getFullYear();
+
+  btnElimConfirmar.disabled = true;
+  btnElimConfirmar.textContent = 'Eliminando...';
+  setStatus('loading', 'Eliminando registro...');
+
+  try {
+    const res = await apiFetch(CONFIG.N8N_DELETE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, dia, mes, anio }),
+    });
+    if (!res.ok) throw new Error();
+    closeModalEliminar();
+    toast('Registro eliminado correctamente', 'success');
+    selDia.value = '';
+    diaLabel.textContent = 'Selecciona el día';
+    diaTrigger.classList.remove('filled');
+    document.getElementById('eliminar-registro').hidden = true;
+    setStatus('ok', 'Conectado · Google Drive listo');
+    await checkDias();
+  } catch {
+    toast('Error al eliminar. Intenta de nuevo.', 'error');
+    setStatus('ok', 'Conectado · Google Drive listo');
+  }
+
+  btnElimConfirmar.disabled = false;
+  btnElimConfirmar.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg> Sí, eliminar`;
+});
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 

@@ -44,21 +44,35 @@ let trimestreSeleccionado = 'Acumulado';
 let trimestreControl      = 'Acumulado';
 let grupoFiltro           = 'Todos';
 
+const Q3_INICIO_DATE = new Date(CONFIG.Q3_INICIO);
+const Q4_INICIO_DATE = new Date(CONFIG.Q4_INICIO);
+
+function trimesteBloqueado(q) {
+  if (q === 'Q3') return now < Q3_INICIO_DATE;
+  if (q === 'Q4') return now < Q4_INICIO_DATE;
+  return false;
+}
+
 function renderTrimestresPersonal() {
   const container = document.getElementById('trimestre-chips');
   if (!container) return;
   container.innerHTML = '';
   ['Acumulado', ...Object.keys(TRIMESTRES)].forEach(q => {
+    const bloqueado = trimesteBloqueado(q);
     const chip = document.createElement('button');
     chip.type = 'button';
-    chip.className = 'mes-chip' + (q === trimestreSeleccionado ? ' active' : '');
+    chip.className = 'mes-chip' + (q === trimestreSeleccionado ? ' active' : '') + (bloqueado ? ' disabled' : '');
     chip.textContent = q;
-    chip.addEventListener('click', async () => {
-      trimestreSeleccionado = q;
-      renderTrimestresPersonal();
-      const nombre = document.getElementById('dash-nombre').value;
-      if (nombre) await cargarPersonal(nombre);
-    });
+    chip.disabled = bloqueado;
+    chip.title = bloqueado ? 'Próximamente disponible' : '';
+    if (!bloqueado) {
+      chip.addEventListener('click', async () => {
+        trimestreSeleccionado = q;
+        renderTrimestresPersonal();
+        const nombre = document.getElementById('dash-nombre').value;
+        if (nombre) await cargarPersonal(nombre);
+      });
+    }
     container.appendChild(chip);
   });
 }
@@ -68,16 +82,21 @@ function renderTrimestresControl() {
   if (!container) return;
   container.innerHTML = '';
   ['Acumulado', ...Object.keys(TRIMESTRES)].forEach(q => {
+    const bloqueado = trimesteBloqueado(q);
     const chip = document.createElement('button');
     chip.type = 'button';
-    chip.className = 'mes-chip' + (q === trimestreControl ? ' active' : '');
+    chip.className = 'mes-chip' + (q === trimestreControl ? ' active' : '') + (bloqueado ? ' disabled' : '');
     chip.textContent = q;
-    chip.addEventListener('click', async () => {
-      trimestreControl = q;
-      grupoFiltro = 'Todos';
-      renderTrimestresControl();
-      await cargarControl();
-    });
+    chip.disabled = bloqueado;
+    chip.title = bloqueado ? 'Próximamente disponible' : '';
+    if (!bloqueado) {
+      chip.addEventListener('click', async () => {
+        trimestreControl = q;
+        grupoFiltro = 'Todos';
+        renderTrimestresControl();
+        await cargarControl();
+      });
+    }
     container.appendChild(chip);
   });
 }
@@ -572,13 +591,14 @@ function renderControl(data) {
   const fmt = n => '€' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const filas = actividades.map(a => {
-    const estado   = a.pct > 100 ? 'excedido' : a.pct >= 90 ? 'advertencia' : 'completado';
-    const rowClass = a.pct > 100 ? 'fila-excedida' : a.pct >= 90 ? 'fila-advertencia' : '';
+    const pct      = a.diasPlan > 0 ? Math.round((a.diasEjec / a.diasPlan) * 100) : (a.diasEjec > 0 ? 999 : 0);
+    const estado   = pct > 100 ? 'excedido' : pct >= 90 ? 'advertencia' : 'completado';
+    const rowClass = pct > 100 ? 'fila-excedida' : pct >= 90 ? 'fila-advertencia' : '';
     const badge    = `<div class="mini-progress">
       <div class="mini-bar-track">
-        <div class="mini-bar-fill ${estado}" style="width:${Math.min(a.pct, 100)}%"></div>
+        <div class="mini-bar-fill ${estado}" style="width:${Math.min(pct, 100)}%"></div>
       </div>
-      <span class="mini-label ${estado}">${a.pct}%</span>
+      <span class="mini-label ${estado}">${pct}%</span>
     </div>`;
     const obsHTML = a.observados?.length
       ? a.observados.map(o => {
@@ -603,8 +623,8 @@ function renderControl(data) {
       <div class="card-header">
         <span class="card-title">Control presupuestal por actividad</span>
         <div class="matriz-leyenda" style="margin:0">
-          <span class="ley-item"><span class="obs-chip obs-exc">nombre</span> Excedió días</span>
-          <span class="ley-item"><span class="obs-chip obs-sin">nombre</span> Sin asignar</span>
+          <span class="ley-item"><span class="obs-chip obs-exc">nombre</span> Excedió días asignados</span>
+          <span class="ley-item"><span class="obs-chip obs-sin">nombre</span> Actividad no asignada</span>
         </div>
       </div>
       <div style="overflow-x:auto">

@@ -40,12 +40,26 @@
         </select>
       </div>
 
+      <div class="field">
+        <label>Actividad</label>
+        <div id="actividad-trigger" class="select-trigger" tabindex="0">
+          <span id="actividad-label">Selecciona la actividad</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#78786e" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <input type="hidden" id="actividad" name="actividad">
+        <div id="actividad-progreso" hidden style="margin-top:8px"></div>
+      </div>
+
+      <hr>
+
       <div class="field-row">
         <div class="field">
-          <label for="dia">Día</label>
-          <select id="dia" name="dia" required>
-            <option value="">Selecciona el día</option>
-          </select>
+          <label>Día</label>
+          <div id="dia-trigger" class="select-trigger" tabindex="0">
+            <span id="dia-label">Selecciona el día</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#78786e" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <input type="hidden" id="dia" name="dia">
         </div>
         <div class="field">
           <label for="days_worked">Tiempo dedicado</label>
@@ -57,6 +71,13 @@
         </div>
       </div>
 
+      <div id="eliminar-registro" hidden>
+        <button type="button" id="btn-eliminar" class="btn-eliminar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Eliminar este registro
+        </button>
+      </div>
+
       <div class="field">
         <label for="lugar">Modalidad</label>
         <select id="lugar" name="lugar" required>
@@ -64,18 +85,6 @@
           <option value="Remote">Virtual</option>
           <option value="Field">Presencial</option>
         </select>
-      </div>
-
-      <hr>
-
-      <div class="field">
-        <label>Actividad</label>
-        <div id="actividad-trigger" class="select-trigger" tabindex="0">
-          <span id="actividad-label">Selecciona la actividad</span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#78786e" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-        <input type="hidden" id="actividad" name="actividad">
-        <div id="actividad-progreso" hidden style="margin-top:8px"></div>
       </div>
 
       <div class="field">
@@ -101,6 +110,37 @@
   </div>
 </main>
 
+<!-- Panel selector de día -->
+<div id="dia-overlay" class="picker-overlay" hidden>
+  <div class="picker-panel">
+    <div class="picker-header">
+      <span style="font-weight:500;font-size:15px;color:var(--text)">Selecciona el día</span>
+      <button type="button" id="dia-close" class="picker-close">✕</button>
+    </div>
+    <ul id="dia-list" class="picker-list"></ul>
+  </div>
+</div>
+
+<!-- Modal confirmar eliminar -->
+<div id="modal-eliminar" class="modal-overlay" hidden>
+  <div class="modal">
+    <div class="modal-header" style="border-bottom:1px solid #fca5a5">
+      <span class="modal-title" style="color:#dc2626">⚠ Eliminar registro</span>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text);margin-bottom:12px">¿Estás seguro de eliminar este registro?</p>
+      <div class="conf-row"><span class="conf-label">Miembro</span><span id="elim-nombre" class="conf-value"></span></div>
+      <div class="conf-row"><span class="conf-label">Día</span><span id="elim-dia" class="conf-value"></span></div>
+      <div class="conf-row"><span class="conf-label">Mes</span><span id="elim-mes" class="conf-value"></span></div>
+      <p style="font-size:12px;color:#dc2626;margin-top:12px">Esta acción no se puede deshacer.</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" id="btn-elim-cancelar" class="btn-secondary">Cancelar</button>
+      <button type="button" id="btn-elim-confirmar" class="btn-eliminar" style="height:44px;padding:0 22px">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Panel selector de actividad -->
 <div id="actividad-overlay" class="picker-overlay" hidden>
   <div class="picker-panel">
@@ -120,10 +160,10 @@
     </div>
     <div class="modal-body">
       <div class="conf-row"><span class="conf-label">Miembro</span><span id="conf-nombre" class="conf-value"></span></div>
+      <div class="conf-row conf-actividad-row"><span class="conf-label">Actividad</span><span id="conf-actividad" class="conf-value"></span></div>
       <div class="conf-row"><span class="conf-label">Día</span><span id="conf-dia" class="conf-value"></span></div>
       <div class="conf-row"><span class="conf-label">Tiempo</span><span id="conf-tiempo" class="conf-value"></span></div>
       <div class="conf-row"><span class="conf-label">Modalidad</span><span id="conf-lugar" class="conf-value"></span></div>
-      <div class="conf-row conf-actividad-row"><span class="conf-label">Actividad</span><span id="conf-actividad" class="conf-value"></span></div>
     </div>
     <div class="modal-footer">
       <button type="button" id="btn-cancelar" class="btn-secondary">Cancelar</button>

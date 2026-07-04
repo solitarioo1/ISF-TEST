@@ -265,6 +265,7 @@ async function cargarDatos() {
     setStatus('ok', 'Conectado · Google Drive listo');
     document.getElementById('nombre').addEventListener('change', async () => {
       const nombre = document.getElementById('nombre').value;
+      actualizarFilledSelect(document.getElementById('nombre'));
       codigosAsignados = null;
       // Bloquear picker hasta que carguen los datos
       trigger.style.pointerEvents = 'none';
@@ -520,9 +521,13 @@ document.getElementById('form-registro').addEventListener('submit', e => {
   showModal(payload);
 });
 
-// Limpiar borde rojo al cambiar selects y triggers
+// Filled state en selects nativos
+function actualizarFilledSelect(s) {
+  s.style.borderColor = '';
+  s.classList.toggle('filled', !!s.value);
+}
 document.querySelectorAll('select').forEach(s =>
-  s.addEventListener('change', () => s.style.borderColor = '')
+  s.addEventListener('change', () => actualizarFilledSelect(s))
 );
 diaTrigger.addEventListener('click', () => diaTrigger.style.borderColor = '');
 

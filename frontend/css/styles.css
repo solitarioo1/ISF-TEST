@@ -137,6 +137,7 @@ select {
 }
 
 select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(249,112,72,0.12); }
+select.filled { background-color: #FEF8F5; border-color: #f9bfaa; color: var(--text); }
 
 #dia { font-family: var(--mono); font-size: 13px; }
 #dia option:disabled { color: #bbb; }
@@ -534,7 +535,7 @@ tr:last-child td { border-bottom: none; }
 .select-trigger:hover,
 .select-trigger:focus { border-color: var(--border-focus); }
 
-.select-trigger.filled { color: var(--text); }
+.select-trigger.filled { color: var(--text); background-color: #FEF8F5; border-color: #f9bfaa; }
 .select-trigger:not(.filled) { color: var(--text-muted); }
 
 .select-trigger svg { flex-shrink: 0; }
@@ -1104,17 +1105,14 @@ tr:last-child td { border-bottom: none; }
 
   .select-trigger { font-size: 14px; }
 
-  /* Picker: slide desde abajo en móvil */
-  .picker-overlay { padding: 12px 8px; align-items: flex-end; }
-  .picker-panel {
-    max-height: 88vh;
-    border-radius: 14px 14px 0 0;
-  }
+  /* Picker: centrado en pantalla */
+  .picker-overlay { padding: 12px; align-items: center; justify-content: center; }
+  .picker-panel { max-height: 86vh; border-radius: 12px; width: calc(100vw - 24px); }
   .picker-list li { padding: 13px 16px; font-size: 14px; }
 
-  /* Modal: slide desde abajo en móvil */
-  .modal-overlay { padding: 0; align-items: flex-end; }
-  .modal { border-radius: 16px 16px 0 0; max-width: 100%; }
+  /* Modal confirmación: centrado en pantalla */
+  .modal-overlay { padding: 12px; align-items: center; justify-content: center; }
+  .modal { border-radius: 12px; width: calc(100vw - 24px); max-width: 100%; }
   .modal-header { padding: 16px 18px; }
   .modal-body { padding: 16px 18px; gap: 12px; }
   .modal-footer { padding: 12px 18px; flex-direction: column-reverse; gap: 10px; }

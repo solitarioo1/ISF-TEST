@@ -220,6 +220,30 @@ let categoriasData = [];
 let categoriaActual = null;
 let codigosAsignados = null;
 let personalData     = {};  // codigo → { plan, exec }
+let opcionesPorMiembro = {}; // nombre → { '1': bool, '0.5': bool, '0.25': bool, '0.125': bool }
+
+const TIEMPO_LABELS = {
+  '1':     '1 — Día completo',
+  '0.5':   '0.5 — Medio día',
+  '0.25':  '0.25 — Cuarto de día',
+  '0.125': '0.125 — Octavo de día',
+};
+
+function actualizarOpcionesTiempo(nombre) {
+  const selTiempo = document.getElementById('days_worked');
+  const opciones  = opcionesPorMiembro[nombre];
+  const valorPrevio = selTiempo.value;
+  Array.from(selTiempo.options).forEach(op => {
+    if (!op.value) return; // "Selecciona"
+    const permitido = !opciones || opciones[op.value] !== false;
+    op.hidden = !permitido;
+    op.disabled = !permitido;
+  });
+  if (valorPrevio && selTiempo.options[selTiempo.selectedIndex]?.disabled) {
+    selTiempo.value = '';
+    actualizarFilledSelect(selTiempo);
+  }
+}
 
 async function cargarPersonalData(nombre) {
   try {
@@ -260,12 +284,17 @@ async function cargarDatos() {
     if (!res.ok) throw new Error('n8n respondió con error');
     const { miembros, categorias } = await res.json();
 
-    miembros.forEach(m => document.getElementById('nombre').add(new Option(m, m)));
+    miembros.forEach(m => {
+      const nombre = typeof m === 'string' ? m : m.nombre;
+      document.getElementById('nombre').add(new Option(nombre, nombre));
+      if (typeof m === 'object' && m.opciones) opcionesPorMiembro[nombre] = m.opciones;
+    });
     categoriasData = categorias;
     setStatus('ok', 'Conectado · Google Drive listo');
     document.getElementById('nombre').addEventListener('change', async () => {
       const nombre = document.getElementById('nombre').value;
       actualizarFilledSelect(document.getElementById('nombre'));
+      actualizarOpcionesTiempo(nombre);
       codigosAsignados = null;
       // Bloquear picker hasta que carguen los datos
       trigger.style.pointerEvents = 'none';
@@ -426,7 +455,7 @@ function showModal(payload) {
   document.getElementById('conf-nombre').textContent    = payload.nombre;
   document.getElementById('conf-dia').textContent       = diaLabel.textContent.trim();
   document.getElementById('conf-tiempo').textContent    =
-    payload.days_worked === '0.5' ? '0.5 — Medio día' : '1 — Día completo';
+    TIEMPO_LABELS[payload.days_worked] || payload.days_worked;
   document.getElementById('conf-lugar').textContent     = LUGAR_ES[payload.lugar] || payload.lugar;
   document.getElementById('conf-actividad').textContent = triggerLabel.textContent;
   modal.hidden = false;

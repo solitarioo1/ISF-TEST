@@ -16,6 +16,11 @@ let subtabActiva = 'eq-mes';
 // Conversión entre la tabla de horas (plan en HORAS) y el backup (ejecutado en DÍAS)
 const HORAS_POR_DIA = 1;
 
+// Redondea solo el ruido de punto flotante (ej. 0.1+0.25=0.35000000000000003), sin perder precisión real
+function fmtDias(n) {
+  return Math.round(n * 1000) / 1000;
+}
+
 let equipoPlan  = { planPorCodigo: {}, planTotal: 0 };
 let memberRates = {};
 
@@ -417,9 +422,9 @@ function renderEquipoResumen() {
   const rest = Math.max(0, plan - exec);
   const pct  = plan > 0 ? Math.round(exec / plan * 100) : 0;
 
-  document.getElementById('eq-plan').textContent = Math.round(plan);
-  document.getElementById('eq-exec').textContent = Math.round(exec * 10) / 10;
-  document.getElementById('eq-rest').textContent = Math.round(rest);
+  document.getElementById('eq-plan').textContent = fmtDias(plan);
+  document.getElementById('eq-exec').textContent = fmtDias(exec);
+  document.getElementById('eq-rest').textContent = fmtDias(rest);
   document.getElementById('eq-pct').textContent  = `${pct}%`;
   document.getElementById('equipo-badge').textContent = `${miembros.length} miembros`;
 
@@ -431,7 +436,7 @@ function renderEquipoResumen() {
     data: {
       labels: ['Ejecutado', 'Falta'],
       datasets: [{
-        data: [Math.round(exec * 10) / 10, Math.round(rest * 10) / 10],
+        data: [fmtDias(exec), fmtDias(rest)],
         backgroundColor: ['#00C9B1', '#E5E7EB'],
         borderWidth: 0
       }]
@@ -644,8 +649,8 @@ function renderControl(data) {
           <tfoot>
             <tr style="font-weight:700;font-size:15px;background:var(--accent-light);border-top:2px solid var(--border)">
               <td style="padding:12px 8px">Total</td>
-              <td style="text-align:center;padding:12px 8px">${actividades.reduce((s,a)=>s+a.diasPlan,0).toFixed(1)}</td>
-              <td style="text-align:center;color:var(--teal);padding:12px 8px">${actividades.reduce((s,a)=>s+a.diasEjec,0).toFixed(1)}</td>
+              <td style="text-align:center;padding:12px 8px">${fmtDias(actividades.reduce((s,a)=>s+a.diasPlan,0))}</td>
+              <td style="text-align:center;color:var(--teal);padding:12px 8px">${fmtDias(actividades.reduce((s,a)=>s+a.diasEjec,0))}</td>
               ${(()=>{const me=actividades.reduce((s,a)=>s+a.montoEstimado,0),mr=actividades.reduce((s,a)=>s+a.montoReal,0),excede=mr>me;return`<td style="text-align:right;font-size:16px;padding:12px 8px">${fmt(me)}</td><td style="text-align:right;font-size:16px;font-weight:800;color:${excede?'#dc2626':'var(--accent)'};padding:12px 8px">${fmt(mr)}</td>`})()}
               <td></td><td></td>
             </tr>

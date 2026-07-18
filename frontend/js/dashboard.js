@@ -196,10 +196,10 @@ async function cargarMiembros() {
   try {
     const res = await apiFetch(CONFIG.N8N_REFDATA);
     const { miembros: m, categorias } = await res.json();
-    miembros = m;
+    miembros = m.map(x => typeof x === 'string' ? x : x.nombre);
     const sel = document.getElementById('dash-nombre');
-    m.forEach(n => sel.add(new Option(n, n)));
-    document.getElementById('equipo-badge').textContent = `${m.length} miembros`;
+    miembros.forEach(n => sel.add(new Option(n, n)));
+    document.getElementById('equipo-badge').textContent = `${miembros.length} miembros`;
 
     // Construir mapa código → label ES y sección → nombre real
     (categorias || []).forEach(cat => {

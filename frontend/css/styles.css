@@ -30,7 +30,7 @@ header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   padding: 0 32px;
-  height: 52px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -48,7 +48,7 @@ header {
 }
 
 .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
-.logo-img { height: 28px; width: auto; display: block; }
+.logo-img { height: 44px; width: auto; display: block; }
 
 nav { display: flex; gap: 4px; }
 
@@ -888,15 +888,15 @@ tr:last-child td { border-bottom: none; }
   border-bottom: 1px solid var(--border);
 }
 
-/* Intensidad por días */
-.cel-bajo   { background: #E6FAF8; color: #00857a; }
-.cel-medio  { background: #BDEEF8; color: #00657a; }
-.cel-alto   { background: #F97048; color: #fff; }
-
 /* Fila alterna */
 .fila-par .matriz-nombre-cel,
 .fila-par .matriz-cel,
 .fila-par .matriz-cel-total { background-color: #fafafa; }
+
+/* Intensidad por días (debe ir después de "Fila alterna" para ganarle en especificidad) */
+.matriz-cel.cel-bajo   { background: #E6FAF8; color: #00857a; }
+.matriz-cel.cel-medio  { background: #BDEEF8; color: #00657a; }
+.matriz-cel.cel-alto   { background: #F97048; color: #fff; }
 
 /* Fila de totales */
 .fila-totales .matriz-nombre-cel {
@@ -1046,7 +1046,8 @@ tr:last-child td { border-bottom: none; }
    RESPONSIVE — TABLET  (max 768px)
    ══════════════════════════════════════════════ */
 @media (max-width: 768px) {
-  header { padding: 0 16px; height: 48px; }
+  header { padding: 0 16px; height: 56px; }
+  .logo-img { height: 34px; }
   nav a { padding: 5px 9px; font-size: 12px; }
 
   main { padding: 20px 14px; align-items: flex-start; }
@@ -1082,13 +1083,18 @@ tr:last-child td { border-bottom: none; }
   .stat-row-5 { grid-template-columns: repeat(2, 1fr); }
   .mes-chips { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
   .mes-chip { flex-shrink: 0; }
+
+  /* Sub-tabs de Equipo: labels largos, mejor scroll horizontal que estirado */
+  #equipo-subtabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+  #equipo-subtabs .dash-tab { flex: none; white-space: nowrap; }
 }
 
 /* ══════════════════════════════════════════════
    RESPONSIVE — MÓVIL PEQUEÑO  (max 480px)
    ══════════════════════════════════════════════ */
 @media (max-width: 480px) {
-  header { height: 50px; }
+  header { height: 52px; }
+  .logo-img { height: 30px; }
   nav { gap: 2px; }
   nav a { font-size: 11px; padding: 5px 8px; }
 

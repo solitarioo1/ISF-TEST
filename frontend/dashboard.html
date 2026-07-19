@@ -15,6 +15,7 @@
 
 <header>
   <a class="logo" href="#">
+    <img src="img/logo_la_positiva.png" class="logo-img" alt="">
     ISF Café Seguro Perú
   </a>
   <nav>
@@ -26,7 +27,7 @@
 <main class="dash-main">
 
   <div class="dash-top">
-    <div class="field" style="max-width:320px;">
+    <div class="field" id="dash-nombre-field" style="max-width:320px;">
       <label for="dash-nombre">Miembro del equipo</label>
       <select id="dash-nombre">
         <option value="">Selecciona tu nombre</option>
@@ -143,6 +144,13 @@
   <!-- TAB: Equipo -->
   <div id="tab-equipo" class="dash-section" hidden>
 
+    <div style="display:flex;justify-content:flex-end">
+      <button type="button" id="btn-exportar-pdf" class="btn-secondary" style="display:none;align-items:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Exportar PDF
+      </button>
+    </div>
+
     <!-- Resumen general del proyecto -->
     <div class="card" style="margin-top:0">
       <div class="card-header">
@@ -176,7 +184,8 @@
 
     <div class="dash-tabs" id="equipo-subtabs" style="justify-content:flex-start">
       <button class="dash-tab active" data-subtab="eq-mes">Por mes</button>
-      <button class="dash-tab" data-subtab="eq-proyecto">Control presupuestal</button>
+      <button class="dash-tab" data-subtab="eq-resumen">Control presupuestal</button>
+      <button class="dash-tab" data-subtab="eq-proyecto">Control presupuestal disgregado</button>
     </div>
 
     <!-- Equipo por mes: matriz de participación -->
@@ -198,10 +207,21 @@
       </div>
     </div>
 
-    <!-- Equipo: Control presupuestal -->
+    <!-- Equipo: selector de trimestre compartido -->
+    <div id="control-chips-wrap" hidden>
+      <div id="control-chips" class="mes-chips" style="padding:1rem 1rem 0.5rem"></div>
+    </div>
+
+    <!-- Equipo: Control presupuestal (resumen por categoría) -->
+    <div id="eq-resumen" hidden>
+      <div id="control-resumen-content">
+        <p style="text-align:center;color:var(--text-muted);padding:32px">Cargando…</p>
+      </div>
+    </div>
+
+    <!-- Equipo: Control presupuestal disgregado (por actividad) -->
     <div id="eq-proyecto" hidden>
-      <div id="control-chips" style="padding:1rem 1rem 0.5rem"></div>
-      <div id="grupo-chips" style="padding:0 1rem 0.5rem"></div>
+      <div id="grupo-chips" class="mes-chips" style="padding:0 1rem 0.5rem"></div>
       <div id="control-content">
         <p style="text-align:center;color:var(--text-muted);padding:32px">Cargando…</p>
       </div>
@@ -217,7 +237,11 @@
 </div>
 
 <div id="toast"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="js/dashboard.js"></script>
+<script src="js/reporte.js"></script>
 </body>
 </html>

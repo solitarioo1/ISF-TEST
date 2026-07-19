@@ -241,6 +241,7 @@ document.querySelectorAll('.dash-top .dash-tab').forEach(btn => {
     tabActiva = btn.dataset.tab;
     document.querySelectorAll('.dash-section').forEach(s => s.hidden = true);
     document.getElementById(`tab-${tabActiva}`).hidden = false;
+    document.getElementById('dash-nombre-field').style.visibility = tabActiva === 'equipo' ? 'hidden' : '';
 
     const nombre = document.getElementById('dash-nombre').value;
     if (tabActiva === 'personal' && nombre) await cargarPersonal(nombre);
@@ -259,10 +260,17 @@ document.querySelectorAll('#equipo-subtabs .dash-tab').forEach(btn => {
     document.querySelectorAll('#equipo-subtabs .dash-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     subtabActiva = btn.dataset.subtab;
-    document.getElementById('eq-mes').hidden      = subtabActiva !== 'eq-mes';
-    document.getElementById('eq-proyecto').hidden = subtabActiva !== 'eq-proyecto';
-    if (subtabActiva === 'eq-proyecto') cargarControl();
-    else renderEquipoMes();
+    document.getElementById('eq-mes').hidden            = subtabActiva !== 'eq-mes';
+    document.getElementById('eq-resumen').hidden         = subtabActiva !== 'eq-resumen';
+    document.getElementById('eq-proyecto').hidden        = subtabActiva !== 'eq-proyecto';
+    document.getElementById('control-chips-wrap').hidden = subtabActiva !== 'eq-resumen' && subtabActiva !== 'eq-proyecto';
+    if (subtabActiva === 'eq-resumen' || subtabActiva === 'eq-proyecto') {
+      cargarControl();
+    } else {
+      const btnPdf = document.getElementById('btn-exportar-pdf');
+      if (btnPdf) btnPdf.style.display = 'none';
+      renderEquipoMes();
+    }
   });
 });
 
@@ -547,9 +555,19 @@ function renderEquipoMes() {
 async function cargarControl() {
   renderTrimestresControl();
   const contenedor = document.getElementById('control-content');
-  if (!contenedor) return;
-  if (controlCache[trimestreControl]) { renderGrupoChips(controlCache[trimestreControl].actividades || []); renderControl(controlCache[trimestreControl]); return; }
-  contenedor.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px">Cargando…</p>';
+  const resumenCont = document.getElementById('control-resumen-content');
+  if (!contenedor || !resumenCont) return;
+  const btnPdf = document.getElementById('btn-exportar-pdf');
+  if (btnPdf) btnPdf.style.display = 'none';
+  if (controlCache[trimestreControl]) {
+    renderGrupoChips(controlCache[trimestreControl].actividades || []);
+    renderControl(controlCache[trimestreControl]);
+    renderControlResumen(controlCache[trimestreControl]);
+    if (btnPdf) btnPdf.style.display = 'inline-flex';
+    return;
+  }
+  contenedor.innerHTML  = '<p style="text-align:center;color:var(--text-muted);padding:32px">Cargando…</p>';
+  resumenCont.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px">Cargando…</p>';
   try {
     const q   = trimestreControl !== 'Acumulado' ? `?trimestre=${trimestreControl}` : '';
     const res = await apiFetch(CONFIG.N8N_CONTROL + q);
@@ -557,9 +575,90 @@ async function cargarControl() {
     controlCache[trimestreControl] = data;
     renderGrupoChips(data.actividades || []);
     renderControl(data);
+    renderControlResumen(data);
+    if (btnPdf) btnPdf.style.display = 'inline-flex';
   } catch {
-    contenedor.innerHTML = '<p style="text-align:center;color:#dc2626;padding:32px">Error al cargar datos</p>';
+    contenedor.innerHTML  = '<p style="text-align:center;color:#dc2626;padding:32px">Error al cargar datos</p>';
+    resumenCont.innerHTML = '<p style="text-align:center;color:#dc2626;padding:32px">Error al cargar datos</p>';
   }
+}
+
+function renderControlResumen(data) {
+  const { actividades: todasActs } = data;
+  const contenedor = document.getElementById('control-resumen-content');
+  if (!contenedor) return;
+  if (!todasActs?.length) {
+    contenedor.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:32px">Sin datos</p>';
+    return;
+  }
+
+  const fmt = n => '€' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const porCategoria = {};
+  todasActs.forEach(a => {
+    const cat = a.codigo.split('-')[0];
+    if (!porCategoria[cat]) porCategoria[cat] = { diasPlan: 0, diasEjec: 0, montoEstimado: 0, montoReal: 0, observados: new Set() };
+    const c = porCategoria[cat];
+    c.diasPlan      += a.diasPlan;
+    c.diasEjec      += a.diasEjec;
+    c.montoEstimado += a.montoEstimado;
+    c.montoReal     += a.montoReal;
+    (a.observados || []).forEach(o => {
+      const nombre = typeof o === 'string' ? o.split('·')[0] : o.nombre;
+      if (nombre) c.observados.add(nombre);
+    });
+  });
+
+  const filas = Object.keys(porCategoria).sort((a, b) => Number(a) - Number(b)).map(cat => {
+    const c        = porCategoria[cat];
+    const pct      = c.diasPlan > 0 ? Math.round((c.diasEjec / c.diasPlan) * 100) : (c.diasEjec > 0 ? 999 : 0);
+    const estado   = pct > 100 ? 'excedido' : pct >= 90 ? 'advertencia' : 'completado';
+    const rowClass = pct > 100 ? 'fila-excedida' : pct >= 90 ? 'fila-advertencia' : '';
+    const badge    = `<div class="mini-progress">
+      <div class="mini-bar-track">
+        <div class="mini-bar-fill ${estado}" style="width:${Math.min(pct, 100)}%"></div>
+      </div>
+      <span class="mini-label ${estado}">${pct}%</span>
+    </div>`;
+    const obsHTML  = c.observados.size
+      ? [...c.observados].map(n => `<span class="obs-chip obs-exc">${n}</span>`).join('')
+      : '<span style="color:#9ca3af;font-size:11px">—</span>';
+    return `<tr class="${rowClass}">
+      <td data-label="Actividad"><strong style="color:var(--accent)" title="${SEC_LABEL[cat] || ''}">${cat} · ${SEC_LABEL[cat] || ''}</strong></td>
+      <td data-label="Días Plan" style="text-align:center">${fmtDias(c.diasPlan)}</td>
+      <td data-label="Días Ejec" style="text-align:center;color:var(--teal);font-weight:600">${fmtDias(c.diasEjec)}</td>
+      <td data-label="Monto Estimado" style="text-align:right">${fmt(c.montoEstimado)}</td>
+      <td data-label="Monto Real" style="text-align:right;font-weight:600">${fmt(c.montoReal)}</td>
+      <td data-label="% Consumo">${badge}</td>
+      <td data-label="Observados">${obsHTML}</td>
+    </tr>`;
+  }).join('');
+
+  contenedor.innerHTML = `
+    <div class="card" style="margin-top:0">
+      <div class="card-header">
+        <span class="card-title">Control presupuestal por categoría</span>
+        <div class="matriz-leyenda" style="margin:0">
+          <span class="ley-item"><span class="obs-chip obs-exc">nombre</span> Excedió días asignados</span>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Actividad</th>
+              <th style="text-align:center">Días Plan</th>
+              <th style="text-align:center;color:var(--teal)">Días Ejec</th>
+              <th style="text-align:right">Monto Estimado</th>
+              <th style="text-align:right;color:var(--accent)">Monto Real</th>
+              <th>% Consumo</th>
+              <th>Observados</th>
+            </tr>
+          </thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>
+    </div>`;
 }
 
 function renderGrupoChips(actividades) {
@@ -570,8 +669,10 @@ function renderGrupoChips(actividades) {
   grupos.forEach(g => {
     const chip = document.createElement('button');
     chip.type = 'button';
-    chip.className = 'mes-chip' + (g === grupoFiltro ? ' active' : '');
-    chip.textContent = g === 'Todos' ? 'Todos' : `${g} · ${SEC_LABEL[g] || g}`;
+    const activo = g === grupoFiltro;
+    chip.className = 'mes-chip' + (activo ? ' active' : '');
+    chip.textContent = (g === 'Todos' || activo) ? (g === 'Todos' ? 'Todos' : `${g} · ${SEC_LABEL[g] || g}`) : g;
+    if (g !== 'Todos' && !activo) chip.title = SEC_LABEL[g] || g;
     chip.addEventListener('click', () => {
       grupoFiltro = g;
       renderGrupoChips(actividades);

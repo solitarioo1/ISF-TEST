@@ -487,6 +487,7 @@ btnConfirm.addEventListener('click', async () => {
     closeModal();
     toast('Registro guardado correctamente', 'success');
     document.getElementById('form-registro').reset();
+    document.querySelectorAll('#form-registro select').forEach(actualizarFilledSelect);
     hiddenActividad.value = '';
     triggerLabel.textContent = 'Selecciona la actividad';
     trigger.classList.remove('filled');

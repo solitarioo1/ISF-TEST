@@ -70,13 +70,15 @@ function getFeriadosPerú(year) {
 const FERIADOS = getFeriadosPerú(now.getFullYear());
 
 // Trimestre actual (0-based): Q1=0,1,2 Q2=3,4,5 Q3=6,7,8 Q4=9,10,11
-// Transición Q2→Q3 se retrasa hasta el 30 de julio para cierre de datos
+// Transición Q2→Q3 se retrasa hasta CONFIG.Q2_CIERRE para cierre de datos
+// (el mes de cierre puede ser cualquiera, no solo julio — se calcula dinámicamente)
 const mesActual = now.getMonth();
 const cierreQ2 = new Date(CONFIG.Q2_CIERRE);
-const esJulioTemprano = now < cierreQ2 && now.getMonth() === 6;
-const trimestreInicio = Math.floor((esJulioTemprano ? 5 : mesActual) / 3) * 3;
-const mesesQ = esJulioTemprano
-  ? [3, 4, 5, 6]  // Abr, May, Jun + Jul durante transición
+const mesCierre = cierreQ2.getMonth();
+const enExtensionQ2 = now < cierreQ2 && mesActual > 5 && mesActual <= mesCierre;
+const trimestreInicio = enExtensionQ2 ? 3 : Math.floor(mesActual / 3) * 3;
+const mesesQ = enExtensionQ2
+  ? Array.from({ length: mesCierre - 3 + 1 }, (_, i) => 3 + i)  // Abr...mes de cierre
   : [trimestreInicio, trimestreInicio + 1, trimestreInicio + 2];
 
 let mesSeleccionado = mesActual;

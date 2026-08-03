@@ -163,13 +163,13 @@ async function cargarEquipoPlan() {
 
 function poblarMeses() {
   const cierreQ2 = new Date(CONFIG.Q2_CIERRE);
-  const esJulioTemprano = now < cierreQ2 && mesActual === 6;
-  const mesParaQ = esJulioTemprano ? 5 : mesActual;
-  const trimestreInicio = Math.floor(mesParaQ / 3) * 3;
+  const mesCierre = cierreQ2.getMonth();
+  const enExtensionQ2 = now < cierreQ2 && mesActual > 5 && mesActual <= mesCierre;
+  const trimestreInicio = enExtensionQ2 ? 3 : Math.floor(mesActual / 3) * 3;
   const anio = now.getFullYear();
 
-  const mesesAMostrar = esJulioTemprano
-    ? [3, 4, 5, 6]
+  const mesesAMostrar = enExtensionQ2
+    ? Array.from({ length: mesCierre - 3 + 1 }, (_, i) => 3 + i)
     : [trimestreInicio, trimestreInicio + 1, trimestreInicio + 2];
 
   ['sel-mes', 'sel-mes-equipo'].forEach(id => {
